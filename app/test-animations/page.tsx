@@ -20,7 +20,18 @@ export default function TestAnimationsPage() {
 
   const setFileState = (fileId: string, status: FileStatus) => {
     setFiles((prev) =>
-      prev.map((file) => (file.id === fileId ? { ...file, status } : file))
+      prev.map((file) =>
+        file.id === fileId
+          ? {
+              ...file,
+              status,
+              errorMessage:
+                status === "error"
+                  ? "Échec de la conversion : format de fichier non supporté"
+                  : undefined,
+            }
+          : file
+      )
     )
   }
 

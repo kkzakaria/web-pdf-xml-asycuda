@@ -25,6 +25,7 @@ export type FileWithPreview = {
   id: string
   preview?: string
   status?: FileStatus
+  errorMessage?: string
 }
 
 export type FileUploadOptions = {

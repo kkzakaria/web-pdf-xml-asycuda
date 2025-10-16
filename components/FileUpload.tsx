@@ -27,6 +27,7 @@ import { SuccessAnimation } from "@/components/SuccessAnimation"
 import { WarningAnimation } from "@/components/WarningAnimation"
 import { ErrorAnimation } from "@/components/ErrorAnimation"
 import { Spinner } from "@/components/ui/spinner"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
 type FileUploadProps = FileUploadOptions & {
   className?: string
@@ -83,6 +84,7 @@ const getFileActionIcon = (
   status: string | undefined,
   disabled: boolean,
   onRemove: () => void,
+  errorMessage?: string,
   onDownload?: () => void
 ) => {
   // Processing state
@@ -93,10 +95,21 @@ const getFileActionIcon = (
   // Error state
   if (status === "error") {
     return (
-      <AlertCircleIcon
-        className="size-4 text-destructive"
-        aria-hidden="true"
-      />
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="-me-2 size-8 flex items-center justify-center">
+            <AlertCircleIcon
+              className="size-4 text-destructive"
+              aria-hidden="true"
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="left">
+          <p className="text-xs max-w-xs">
+            {errorMessage || "Une erreur est survenue lors du traitement"}
+          </p>
+        </TooltipContent>
+      </Tooltip>
     )
   }
 
@@ -315,6 +328,7 @@ export default function FileUpload({
                 file.status,
                 disabled,
                 () => removeFile(file.id),
+                file.errorMessage,
                 onFileDownload ? () => onFileDownload(file.id) : undefined
               )}
             </div>
