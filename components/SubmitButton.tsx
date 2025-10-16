@@ -1,6 +1,6 @@
 import * as React from "react"
-import { Loader2Icon } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import type { VariantProps } from "class-variance-authority"
 
 interface SubmitButtonProps
@@ -39,7 +39,7 @@ const SubmitButton = React.forwardRef<HTMLButtonElement, SubmitButtonProps>(
       >
         {isSubmitting ? (
           <>
-            <Loader2Icon className="animate-spin" />
+            <Spinner />
             {submittingText}
           </>
         ) : (
