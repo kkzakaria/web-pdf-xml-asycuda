@@ -17,9 +17,9 @@ export function FileConversionAnimation({
   className,
 }: FileConversionAnimationProps) {
   return (
-    <div className={cn("flex flex-col items-center gap-6 py-8", className)}>
+    <div className={cn("flex flex-col items-center gap-4 py-4", className)}>
       {/* Animation Lottie */}
-      <div className="w-full max-w-xs">
+      <div className="w-32 h-32">
         <Lottie
           animationData={documentCheckingAnimation}
           loop={true}
