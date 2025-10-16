@@ -21,6 +21,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { FileConversionAnimation } from "@/components/FileConversionAnimation"
 import { SuccessAnimation } from "@/components/SuccessAnimation"
+import { WarningAnimation } from "@/components/WarningAnimation"
+import { ErrorAnimation } from "@/components/ErrorAnimation"
 import { Spinner } from "@/components/ui/spinner"
 
 type FileUploadProps = FileUploadOptions & {
@@ -29,6 +31,12 @@ type FileUploadProps = FileUploadOptions & {
   showClearAllButton?: boolean
   disabled?: boolean
   isSuccess?: boolean
+  isWarning?: boolean
+  warningMessage?: string
+  warningDescription?: string
+  isError?: boolean
+  errorMessage?: string
+  errorDescription?: string
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -79,6 +87,12 @@ export default function FileUpload({
   onFilesAdded,
   disabled = false,
   isSuccess = false,
+  isWarning = false,
+  warningMessage,
+  warningDescription,
+  isError = false,
+  errorMessage,
+  errorDescription,
 }: FileUploadProps) {
   const [
     { files, isDragging, errors },
@@ -130,7 +144,17 @@ export default function FileUpload({
           disabled={isDisabled}
         />
 
-        {isSuccess ? (
+        {isError ? (
+          <ErrorAnimation
+            message={errorMessage}
+            description={errorDescription}
+          />
+        ) : isWarning ? (
+          <WarningAnimation
+            message={warningMessage}
+            description={warningDescription}
+          />
+        ) : isSuccess ? (
           <SuccessAnimation
             message="Conversion réussie !"
             description={`${files.length} fichier${files.length > 1 ? "s" : ""} converti${files.length > 1 ? "s" : ""} avec succès`}
