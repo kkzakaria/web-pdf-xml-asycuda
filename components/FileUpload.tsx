@@ -107,7 +107,7 @@ const getFileActionIcon = (
         <TooltipContent
           side="left"
           className="bg-destructive/10 text-destructive border border-destructive/20"
-          arrowClassName="bg-destructive/10 fill-destructive/10"
+          hideArrow
         >
           <p className="text-xs max-w-xs">
             {errorMessage || "Une erreur est survenue lors du traitement"}
