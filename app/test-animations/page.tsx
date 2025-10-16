@@ -10,22 +10,15 @@ type AnimationState = "normal" | "processing" | "success" | "warning" | "error"
 export default function TestAnimationsPage() {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [currentState, setCurrentState] = useState<AnimationState>("normal")
-  const [fileStates, setFileStates] = useState<Record<string, FileStatus>>({})
 
   const handleFilesChange = useCallback((newFiles: FileWithPreview[]) => {
     queueMicrotask(() => {
-      // Merge file status from previous state
-      const updatedFiles = newFiles.map((file) => ({
-        ...file,
-        status: fileStates[file.id] || file.status || ("idle" as FileStatus),
-      }))
-      setFiles(updatedFiles)
-      console.log("Fichiers sélectionnés:", updatedFiles)
+      setFiles(newFiles)
+      console.log("Fichiers sélectionnés:", newFiles)
     })
-  }, [fileStates])
+  }, [])
 
   const setFileState = (fileId: string, status: FileStatus) => {
-    setFileStates((prev) => ({ ...prev, [fileId]: status }))
     setFiles((prev) =>
       prev.map((file) => (file.id === fileId ? { ...file, status } : file))
     )
@@ -162,6 +155,7 @@ export default function TestAnimationsPage() {
           maxSize={50 * 1024 * 1024}
           accept=".pdf,application/pdf"
           multiple={true}
+          controlledFiles={files}
           onFilesChange={handleFilesChange}
           disabled={currentState === "processing"}
           isSuccess={currentState === "success"}

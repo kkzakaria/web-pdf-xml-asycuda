@@ -19,6 +19,7 @@ import {
   formatBytes,
   useFileUpload,
   type FileUploadOptions,
+  type FileWithPreview,
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import { FileConversionAnimation } from "@/components/FileConversionAnimation"
@@ -40,6 +41,7 @@ type FileUploadProps = FileUploadOptions & {
   errorMessage?: string
   errorDescription?: string
   onFileDownload?: (fileId: string) => void
+  controlledFiles?: FileWithPreview[]
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -157,9 +159,10 @@ export default function FileUpload({
   errorMessage,
   errorDescription,
   onFileDownload,
+  controlledFiles,
 }: FileUploadProps) {
   const [
-    { files, isDragging, errors },
+    { files: internalFiles, isDragging, errors },
     {
       handleDragEnter,
       handleDragLeave,
@@ -179,6 +182,9 @@ export default function FileUpload({
     onFilesChange,
     onFilesAdded,
   })
+
+  // Use controlled files if provided, otherwise use internal state
+  const files = controlledFiles ?? internalFiles
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
