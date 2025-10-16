@@ -5,7 +5,7 @@ Composant de bouton de soumission avec état de chargement, basé sur le Button 
 ## Import
 
 ```typescript
-import { SubmitButton } from "@/components/ui/submit-button"
+import { SubmitButton } from "@/components/SubmitButton"
 ```
 
 ## API
@@ -32,7 +32,7 @@ Toutes les autres props de `HTMLButtonElement` sont également supportées.
 "use client"
 
 import { useState } from "react"
-import { SubmitButton } from "@/components/ui/submit-button"
+import { SubmitButton } from "@/components/SubmitButton"
 
 export default function SimpleForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -127,7 +127,7 @@ export default function SimpleForm() {
 "use client"
 
 import { useState, useCallback } from "react"
-import { SubmitButton } from "@/components/ui/submit-button"
+import { SubmitButton } from "@/components/SubmitButton"
 import FileUpload from "@/components/FileUpload"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 
@@ -203,7 +203,7 @@ export default function FileSubmissionForm() {
 "use client"
 
 import { useState } from "react"
-import { SubmitButton } from "@/components/ui/submit-button"
+import { SubmitButton } from "@/components/SubmitButton"
 
 export default function FormWithError() {
   const [isSubmitting, setIsSubmitting] = useState(false)
