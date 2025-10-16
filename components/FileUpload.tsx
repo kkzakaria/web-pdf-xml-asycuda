@@ -95,23 +95,31 @@ export default function FileUpload({
     onFilesAdded,
   })
 
+  const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
+
   return (
     <div className={`flex flex-col gap-2 ${className || ""}`}>
       {/* Zone de drop */}
       <div
         role="button"
-        onClick={openFileDialog}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        onClick={isMaxFilesReached ? undefined : openFileDialog}
+        onDragEnter={isMaxFilesReached ? undefined : handleDragEnter}
+        onDragLeave={isMaxFilesReached ? undefined : handleDragLeave}
+        onDragOver={isMaxFilesReached ? undefined : handleDragOver}
+        onDrop={isMaxFilesReached ? undefined : handleDrop}
         data-dragging={isDragging || undefined}
-        className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+        data-disabled={isMaxFilesReached || undefined}
+        className={`flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 ${
+          isMaxFilesReached
+            ? "cursor-not-allowed opacity-50 bg-muted/30"
+            : "hover:bg-accent/50 cursor-pointer"
+        }`}
       >
         <input
           {...getInputProps()}
           className="sr-only"
           aria-label="Upload files"
+          disabled={isMaxFilesReached}
         />
 
         <div className="flex flex-col items-center justify-center text-center">
@@ -122,24 +130,32 @@ export default function FileUpload({
             <FileUpIcon className="size-4 opacity-60" />
           </div>
           <p className="mb-1.5 text-sm font-medium">
-            {multiple ? "Téléverser des fichiers" : "Téléverser un fichier"}
+            {isMaxFilesReached
+              ? `Maximum atteint (${files.length}/${maxFiles} fichiers)`
+              : multiple
+                ? "Téléverser des fichiers"
+                : "Téléverser un fichier"}
           </p>
           <p className="mb-2 text-xs text-muted-foreground">
-            Glisser-déposer ou cliquer pour parcourir
+            {isMaxFilesReached
+              ? "Supprimez des fichiers pour en ajouter d'autres"
+              : "Glisser-déposer ou cliquer pour parcourir"}
           </p>
-          <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
-            {accept !== "*" && <span>{accept}</span>}
-            {accept !== "*" && <span>∙</span>}
-            {multiple && maxFiles !== Infinity && (
-              <>
-                <span>Max {maxFiles} fichiers</span>
-                <span>∙</span>
-              </>
-            )}
-            {maxSize !== Infinity && (
-              <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
-            )}
-          </div>
+          {!isMaxFilesReached && (
+            <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
+              {accept !== "*" && <span>{accept}</span>}
+              {accept !== "*" && <span>∙</span>}
+              {multiple && maxFiles !== Infinity && (
+                <>
+                  <span>Max {maxFiles} fichiers</span>
+                  <span>∙</span>
+                </>
+              )}
+              {maxSize !== Infinity && (
+                <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
