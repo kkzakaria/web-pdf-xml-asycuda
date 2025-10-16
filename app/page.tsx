@@ -10,8 +10,10 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleFilesChange = useCallback((files: FileWithPreview[]) => {
-    setFiles(files)
-    console.log("Fichiers sélectionnés:", files)
+    queueMicrotask(() => {
+      setFiles(files)
+      console.log("Fichiers sélectionnés:", files)
+    })
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
