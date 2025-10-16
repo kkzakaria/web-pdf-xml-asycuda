@@ -56,6 +56,8 @@ export default function Home() {
             accept=".pdf,application/pdf"
             multiple={true}
             onFilesChange={handleFilesChange}
+            disabled={isSubmitting}
+            disabledMessage="Conversion en cours..."
           />
 
           {files.length > 0 && (
