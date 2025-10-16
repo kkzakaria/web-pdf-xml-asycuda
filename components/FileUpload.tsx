@@ -24,6 +24,8 @@ type FileUploadProps = FileUploadOptions & {
   className?: string
   showFileList?: boolean
   showClearAllButton?: boolean
+  disabled?: boolean
+  disabledMessage?: string
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -72,6 +74,8 @@ export default function FileUpload({
   initialFiles = [],
   onFilesChange,
   onFilesAdded,
+  disabled = false,
+  disabledMessage = "Traitement en cours...",
 }: FileUploadProps) {
   const [
     { files, isDragging, errors },
@@ -95,23 +99,32 @@ export default function FileUpload({
     onFilesAdded,
   })
 
+  const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
+  const isDisabled = disabled || isMaxFilesReached
+
   return (
     <div className={`flex flex-col gap-2 ${className || ""}`}>
       {/* Zone de drop */}
       <div
         role="button"
-        onClick={openFileDialog}
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        onClick={isDisabled ? undefined : openFileDialog}
+        onDragEnter={isDisabled ? undefined : handleDragEnter}
+        onDragLeave={isDisabled ? undefined : handleDragLeave}
+        onDragOver={isDisabled ? undefined : handleDragOver}
+        onDrop={isDisabled ? undefined : handleDrop}
         data-dragging={isDragging || undefined}
-        className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-colors hover:bg-accent/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
+        data-disabled={isDisabled || undefined}
+        className={`flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 ${
+          isDisabled
+            ? "cursor-not-allowed opacity-50 bg-muted/30"
+            : "hover:bg-accent/50 cursor-pointer"
+        }`}
       >
         <input
           {...getInputProps()}
           className="sr-only"
           aria-label="Upload files"
+          disabled={isDisabled}
         />
 
         <div className="flex flex-col items-center justify-center text-center">
@@ -122,24 +135,36 @@ export default function FileUpload({
             <FileUpIcon className="size-4 opacity-60" />
           </div>
           <p className="mb-1.5 text-sm font-medium">
-            {multiple ? "Téléverser des fichiers" : "Téléverser un fichier"}
+            {disabled
+              ? disabledMessage
+              : isMaxFilesReached
+                ? `Maximum atteint (${files.length}/${maxFiles} fichiers)`
+                : multiple
+                  ? "Téléverser des fichiers"
+                  : "Téléverser un fichier"}
           </p>
           <p className="mb-2 text-xs text-muted-foreground">
-            Glisser-déposer ou cliquer pour parcourir
+            {disabled
+              ? "Veuillez patienter"
+              : isMaxFilesReached
+                ? "Supprimez des fichiers pour en ajouter d'autres"
+                : "Glisser-déposer ou cliquer pour parcourir"}
           </p>
-          <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
-            {accept !== "*" && <span>{accept}</span>}
-            {accept !== "*" && <span>∙</span>}
-            {multiple && maxFiles !== Infinity && (
-              <>
-                <span>Max {maxFiles} fichiers</span>
-                <span>∙</span>
-              </>
-            )}
-            {maxSize !== Infinity && (
-              <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
-            )}
-          </div>
+          {!isDisabled && (
+            <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
+              {accept !== "*" && <span>{accept}</span>}
+              {accept !== "*" && <span>∙</span>}
+              {multiple && maxFiles !== Infinity && (
+                <>
+                  <span>Max {maxFiles} fichiers</span>
+                  <span>∙</span>
+                </>
+              )}
+              {maxSize !== Infinity && (
+                <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -188,6 +213,7 @@ export default function FileUpload({
                 className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
                 onClick={() => removeFile(file.id)}
                 aria-label="Supprimer le fichier"
+                disabled={disabled}
               >
                 <XIcon className="size-4" aria-hidden="true" />
               </Button>
@@ -197,7 +223,12 @@ export default function FileUpload({
           {/* Bouton pour supprimer tous les fichiers */}
           {showClearAllButton && files.length > 1 && (
             <div>
-              <Button size="sm" variant="outline" onClick={clearFiles}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={clearFiles}
+                disabled={disabled}
+              >
                 Supprimer tous les fichiers
               </Button>
             </div>
