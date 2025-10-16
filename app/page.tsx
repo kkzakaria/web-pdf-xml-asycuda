@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react"
 import FileUpload from "@/components/FileUpload"
 import { SubmitButton } from "@/components/SubmitButton"
-import { FileConversionAnimation } from "@/components/FileConversionAnimation"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 
 export default function Home() {
@@ -62,18 +61,6 @@ export default function Home() {
             disabled={isSubmitting}
             disabledMessage="Conversion en cours..."
           />
-
-          {isSubmitting && (
-            <div className="rounded-lg border bg-card p-6">
-              <FileConversionAnimation
-                fileName={
-                  files[0]?.file instanceof File
-                    ? files[0].file.name
-                    : undefined
-                }
-              />
-            </div>
-          )}
 
           {files.length > 0 && (
             <SubmitButton
