@@ -127,11 +127,7 @@ export default function FileUpload({
         />
 
         {disabled ? (
-          <FileConversionAnimation
-            fileName={
-              files[0]?.file instanceof File ? files[0].file.name : undefined
-            }
-          />
+          <FileConversionAnimation />
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
             <div

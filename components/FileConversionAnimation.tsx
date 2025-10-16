@@ -13,13 +13,12 @@ interface FileConversionAnimationProps {
 }
 
 export function FileConversionAnimation({
-  fileName,
   className,
 }: FileConversionAnimationProps) {
   return (
-    <div className={cn("flex flex-col items-center gap-4 py-4", className)}>
+    <div className={cn("flex flex-col items-center gap-3 py-3", className)}>
       {/* Animation Lottie */}
-      <div className="w-32 h-32">
+      <div className="w-24 h-24">
         <Lottie
           animationData={documentCheckingAnimation}
           loop={true}
@@ -27,17 +26,10 @@ export function FileConversionAnimation({
         />
       </div>
 
-      {/* Nom du fichier (optionnel) */}
-      {fileName && (
-        <div className="text-center">
-          <p className="text-sm font-medium text-foreground">
-            Conversion en cours...
-          </p>
-          <p className="text-xs text-muted-foreground mt-1 truncate max-w-md">
-            {fileName}
-          </p>
-        </div>
-      )}
+      {/* Message de traitement */}
+      <p className="text-sm font-medium text-muted-foreground">
+        Traitement en cours...
+      </p>
     </div>
   )
 }
