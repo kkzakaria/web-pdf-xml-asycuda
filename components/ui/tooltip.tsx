@@ -39,9 +39,11 @@ function TooltipContent({
   sideOffset = 0,
   children,
   arrowClassName,
+  hideArrow = false,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content> & {
   arrowClassName?: string
+  hideArrow?: boolean
 }) {
   return (
     <TooltipPrimitive.Portal>
@@ -55,12 +57,14 @@ function TooltipContent({
         {...props}
       >
         {children}
-        <TooltipPrimitive.Arrow
-          className={cn(
-            "bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]",
-            arrowClassName
-          )}
-        />
+        {!hideArrow && (
+          <TooltipPrimitive.Arrow
+            className={cn(
+              "bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]",
+              arrowClassName
+            )}
+          />
+        )}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   )
