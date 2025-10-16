@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import { FileConversionAnimation } from "@/components/FileConversionAnimation"
+import { Spinner } from "@/components/ui/spinner"
 
 type FileUploadProps = FileUploadOptions & {
   className?: string
@@ -214,7 +215,11 @@ export default function FileUpload({
                 aria-label="Supprimer le fichier"
                 disabled={disabled}
               >
-                <XIcon className="size-4" aria-hidden="true" />
+                {disabled ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <XIcon className="size-4" aria-hidden="true" />
+                )}
               </Button>
             </div>
           ))}
