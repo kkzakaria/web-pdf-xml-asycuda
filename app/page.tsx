@@ -59,7 +59,6 @@ export default function Home() {
             multiple={true}
             onFilesChange={handleFilesChange}
             disabled={isSubmitting}
-            disabledMessage="Conversion en cours..."
           />
 
           {files.length > 0 && (

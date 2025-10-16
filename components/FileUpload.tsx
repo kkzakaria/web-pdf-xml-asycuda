@@ -19,13 +19,13 @@ import {
   type FileUploadOptions,
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
+import { FileConversionAnimation } from "@/components/FileConversionAnimation"
 
 type FileUploadProps = FileUploadOptions & {
   className?: string
   showFileList?: boolean
   showClearAllButton?: boolean
   disabled?: boolean
-  disabledMessage?: string
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -75,7 +75,6 @@ export default function FileUpload({
   onFilesChange,
   onFilesAdded,
   disabled = false,
-  disabledMessage = "Traitement en cours...",
 }: FileUploadProps) {
   const [
     { files, isDragging, errors },
@@ -127,45 +126,49 @@ export default function FileUpload({
           disabled={isDisabled}
         />
 
-        <div className="flex flex-col items-center justify-center text-center">
-          <div
-            className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
-            aria-hidden="true"
-          >
-            <FileUpIcon className="size-4 opacity-60" />
-          </div>
-          <p className="mb-1.5 text-sm font-medium">
-            {disabled
-              ? disabledMessage
-              : isMaxFilesReached
+        {disabled ? (
+          <FileConversionAnimation
+            fileName={
+              files[0]?.file instanceof File ? files[0].file.name : undefined
+            }
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center">
+            <div
+              className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
+              aria-hidden="true"
+            >
+              <FileUpIcon className="size-4 opacity-60" />
+            </div>
+            <p className="mb-1.5 text-sm font-medium">
+              {isMaxFilesReached
                 ? `Maximum atteint (${files.length}/${maxFiles} fichiers)`
                 : multiple
                   ? "Téléverser des fichiers"
                   : "Téléverser un fichier"}
-          </p>
-          <p className="mb-2 text-xs text-muted-foreground">
-            {disabled
-              ? "Veuillez patienter"
-              : isMaxFilesReached
+            </p>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {isMaxFilesReached
                 ? "Supprimez des fichiers pour en ajouter d'autres"
                 : "Glisser-déposer ou cliquer pour parcourir"}
-          </p>
-          {!isDisabled && (
-            <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
-              {accept !== "*" && <span>{accept}</span>}
-              {accept !== "*" && <span>∙</span>}
-              {multiple && maxFiles !== Infinity && (
-                <>
-                  <span>Max {maxFiles} fichiers</span>
-                  <span>∙</span>
-                </>
-              )}
-              {maxSize !== Infinity && (
-                <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
-              )}
-            </div>
-          )}
-        </div>
+            </p>
+            {!isMaxFilesReached && (
+              <div className="flex flex-wrap justify-center gap-1 text-xs text-muted-foreground/70">
+                {accept !== "*" && <span>{accept}</span>}
+                {accept !== "*" && <span>∙</span>}
+                {multiple && maxFiles !== Infinity && (
+                  <>
+                    <span>Max {maxFiles} fichiers</span>
+                    <span>∙</span>
+                  </>
+                )}
+                {maxSize !== Infinity && (
+                  <span>Jusqu&apos;à {formatBytes(maxSize)}</span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Affichage des erreurs */}
