@@ -141,7 +141,9 @@ export default function FileUpload({
               {isMaxFilesReached
                 ? `Maximum atteint (${files.length}/${maxFiles} fichiers)`
                 : multiple
-                  ? "Téléverser des fichiers"
+                  ? files.length > 0
+                    ? `Téléverser des fichiers (${files.length}/${maxFiles !== Infinity ? maxFiles : "∞"})`
+                    : "Téléverser des fichiers"
                   : "Téléverser un fichier"}
             </p>
             <p className="mb-2 text-xs text-muted-foreground">
