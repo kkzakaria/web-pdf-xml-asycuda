@@ -1,17 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useCallback } from "react"
 import FileUpload from "@/components/FileUpload"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 
 export default function Home() {
-  const [uploadedFiles, setUploadedFiles] = useState<FileWithPreview[]>([])
-
   const handleFilesChange = useCallback((files: FileWithPreview[]) => {
-    queueMicrotask(() => {
-      setUploadedFiles(files)
-      console.log("Fichiers sélectionnés:", files)
-    })
+    console.log("Fichiers sélectionnés:", files)
   }, [])
 
   return (
@@ -33,22 +28,6 @@ export default function Home() {
           multiple={true}
           onFilesChange={handleFilesChange}
         />
-
-        {uploadedFiles.length > 0 && (
-          <div className="rounded-lg border bg-card p-4">
-            <h2 className="mb-3 text-sm font-medium">
-              {uploadedFiles.length} fichier{uploadedFiles.length > 1 ? "s" : ""}{" "}
-              sélectionné{uploadedFiles.length > 1 ? "s" : ""}
-            </h2>
-            <ul className="space-y-1 text-sm text-muted-foreground">
-              {uploadedFiles.map((file) => (
-                <li key={file.id}>
-                  {file.file instanceof File ? file.file.name : file.file.name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   )
