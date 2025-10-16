@@ -18,9 +18,9 @@ export function SuccessAnimation({
   loop = false,
 }: SuccessAnimationProps) {
   return (
-    <div className={cn("flex flex-col items-center gap-4 py-6", className)}>
+    <div className={cn("flex flex-col items-center gap-3 py-4", className)}>
       {/* Animation Lottie */}
-      <div className="w-32 h-32">
+      <div className="w-24 h-24">
         <Lottie
           animationData={successAnimation}
           loop={loop}
@@ -29,10 +29,10 @@ export function SuccessAnimation({
       </div>
 
       {/* Message de succès */}
-      <div className="text-center space-y-2">
-        <p className="text-lg font-semibold text-foreground">{message}</p>
+      <div className="text-center space-y-1">
+        <p className="text-base font-semibold text-foreground">{message}</p>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         )}
       </div>
     </div>

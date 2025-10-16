@@ -8,6 +8,7 @@ import type { FileWithPreview } from "@/hooks/use-file-upload"
 export default function Home() {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
 
   const handleFilesChange = useCallback((files: FileWithPreview[]) => {
     queueMicrotask(() => {
@@ -25,12 +26,20 @@ export default function Home() {
     }
 
     setIsSubmitting(true)
+    setIsSuccess(false)
 
     try {
       // Logique de conversion à implémenter
       console.log("Conversion de", files.length, "fichier(s)...")
       await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulation
-      alert("Conversion réussie !")
+
+      // Succès
+      setIsSuccess(true)
+
+      // Masquer l'animation de succès après 3 secondes
+      setTimeout(() => {
+        setIsSuccess(false)
+      }, 3000)
     } catch (error) {
       console.error("Erreur:", error)
       alert("Une erreur est survenue lors de la conversion")
@@ -59,6 +68,7 @@ export default function Home() {
             multiple={true}
             onFilesChange={handleFilesChange}
             disabled={isSubmitting}
+            isSuccess={isSuccess}
           />
 
           {files.length > 0 && (

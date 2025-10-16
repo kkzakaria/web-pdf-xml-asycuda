@@ -20,6 +20,7 @@ import {
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import { FileConversionAnimation } from "@/components/FileConversionAnimation"
+import { SuccessAnimation } from "@/components/SuccessAnimation"
 import { Spinner } from "@/components/ui/spinner"
 
 type FileUploadProps = FileUploadOptions & {
@@ -27,6 +28,7 @@ type FileUploadProps = FileUploadOptions & {
   showFileList?: boolean
   showClearAllButton?: boolean
   disabled?: boolean
+  isSuccess?: boolean
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -76,6 +78,7 @@ export default function FileUpload({
   onFilesChange,
   onFilesAdded,
   disabled = false,
+  isSuccess = false,
 }: FileUploadProps) {
   const [
     { files, isDragging, errors },
@@ -127,7 +130,12 @@ export default function FileUpload({
           disabled={isDisabled}
         />
 
-        {disabled ? (
+        {isSuccess ? (
+          <SuccessAnimation
+            message="Conversion réussie !"
+            description={`${files.length} fichier${files.length > 1 ? "s" : ""} converti${files.length > 1 ? "s" : ""} avec succès`}
+          />
+        ) : disabled ? (
           <FileConversionAnimation />
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
