@@ -2,6 +2,8 @@
 
 import {
   AlertCircleIcon,
+  CheckCircleIcon,
+  DownloadIcon,
   FileArchiveIcon,
   FileIcon,
   FileSpreadsheetIcon,
@@ -37,6 +39,7 @@ type FileUploadProps = FileUploadOptions & {
   isError?: boolean
   errorMessage?: string
   errorDescription?: string
+  onFileDownload?: (fileId: string) => void
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -74,6 +77,66 @@ const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
   return <FileIcon className="size-4 opacity-60" />
 }
 
+const getFileActionIcon = (
+  status: string | undefined,
+  disabled: boolean,
+  onRemove: () => void,
+  onDownload?: () => void
+) => {
+  // Processing state
+  if (disabled || status === "processing") {
+    return <Spinner className="size-4" />
+  }
+
+  // Error state
+  if (status === "error") {
+    return (
+      <AlertCircleIcon
+        className="size-4 text-destructive"
+        aria-hidden="true"
+      />
+    )
+  }
+
+  // Success state
+  if (status === "success") {
+    return (
+      <CheckCircleIcon
+        className="size-4 text-green-600"
+        aria-hidden="true"
+      />
+    )
+  }
+
+  // Downloading state
+  if (status === "downloading") {
+    return (
+      <Button
+        size="icon"
+        variant="ghost"
+        className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-primary"
+        onClick={onDownload}
+        aria-label="Télécharger le fichier"
+      >
+        <DownloadIcon className="size-4" aria-hidden="true" />
+      </Button>
+    )
+  }
+
+  // Default: show delete button
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+      onClick={onRemove}
+      aria-label="Supprimer le fichier"
+    >
+      <XIcon className="size-4" aria-hidden="true" />
+    </Button>
+  )
+}
+
 export default function FileUpload({
   className,
   showFileList = true,
@@ -93,6 +156,7 @@ export default function FileUpload({
   isError = false,
   errorMessage,
   errorDescription,
+  onFileDownload,
 }: FileUploadProps) {
   const [
     { files, isDragging, errors },
@@ -241,20 +305,12 @@ export default function FileUpload({
                 </div>
               </div>
 
-              <Button
-                size="icon"
-                variant="ghost"
-                className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
-                onClick={() => removeFile(file.id)}
-                aria-label="Supprimer le fichier"
-                disabled={disabled}
-              >
-                {disabled ? (
-                  <Spinner className="size-4" />
-                ) : (
-                  <XIcon className="size-4" aria-hidden="true" />
-                )}
-              </Button>
+              {getFileActionIcon(
+                file.status,
+                disabled,
+                () => removeFile(file.id),
+                onFileDownload ? () => onFileDownload(file.id) : undefined
+              )}
             </div>
           ))}
 

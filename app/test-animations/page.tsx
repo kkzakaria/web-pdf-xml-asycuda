@@ -3,20 +3,38 @@
 import { useCallback, useState } from "react"
 import FileUpload from "@/components/FileUpload"
 import { Button } from "@/components/ui/button"
-import type { FileWithPreview } from "@/hooks/use-file-upload"
+import type { FileWithPreview, FileStatus } from "@/hooks/use-file-upload"
 
 type AnimationState = "normal" | "processing" | "success" | "warning" | "error"
 
 export default function TestAnimationsPage() {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [currentState, setCurrentState] = useState<AnimationState>("normal")
+  const [fileStates, setFileStates] = useState<Record<string, FileStatus>>({})
 
-  const handleFilesChange = useCallback((files: FileWithPreview[]) => {
+  const handleFilesChange = useCallback((newFiles: FileWithPreview[]) => {
     queueMicrotask(() => {
-      setFiles(files)
-      console.log("Fichiers sélectionnés:", files)
+      // Merge file status from previous state
+      const updatedFiles = newFiles.map((file) => ({
+        ...file,
+        status: fileStates[file.id] || file.status || ("idle" as FileStatus),
+      }))
+      setFiles(updatedFiles)
+      console.log("Fichiers sélectionnés:", updatedFiles)
     })
-  }, [])
+  }, [fileStates])
+
+  const setFileState = (fileId: string, status: FileStatus) => {
+    setFileStates((prev) => ({ ...prev, [fileId]: status }))
+    setFiles((prev) =>
+      prev.map((file) => (file.id === fileId ? { ...file, status } : file))
+    )
+  }
+
+  const handleFileDownload = (fileId: string) => {
+    console.log("Téléchargement du fichier:", fileId)
+    alert(`Téléchargement du fichier: ${files.find((f) => f.id === fileId)?.file.name}`)
+  }
 
   const resetToNormal = () => {
     setCurrentState("normal")
@@ -73,6 +91,71 @@ export default function TestAnimationsPage() {
           </div>
         </div>
 
+        {/* Contrôles des états de fichiers */}
+        {files.length > 0 && (
+          <div className="mb-8 p-6 rounded-lg border bg-card">
+            <h2 className="text-lg font-semibold mb-4">États des fichiers</h2>
+            <div className="space-y-3">
+              {files.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between gap-4 p-3 rounded border bg-background"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {file.file.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      État: {file.status || "idle"}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      variant={file.status === "idle" ? "default" : "outline"}
+                      onClick={() => setFileState(file.id, "idle")}
+                    >
+                      Idle
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={
+                        file.status === "processing" ? "default" : "outline"
+                      }
+                      onClick={() => setFileState(file.id, "processing")}
+                    >
+                      Process
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={
+                        file.status === "downloading" ? "default" : "outline"
+                      }
+                      onClick={() => setFileState(file.id, "downloading")}
+                    >
+                      Download
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={file.status === "success" ? "default" : "outline"}
+                      onClick={() => setFileState(file.id, "success")}
+                    >
+                      Success
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={file.status === "error" ? "default" : "outline"}
+                      onClick={() => setFileState(file.id, "error")}
+                    >
+                      Error
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Composant FileUpload */}
         <FileUpload
           maxFiles={5}
@@ -88,6 +171,7 @@ export default function TestAnimationsPage() {
           isError={currentState === "error"}
           errorMessage="Erreur de conversion"
           errorDescription="Une erreur est survenue lors du traitement des fichiers"
+          onFileDownload={handleFileDownload}
         />
 
         {/* Informations de débogage */}
