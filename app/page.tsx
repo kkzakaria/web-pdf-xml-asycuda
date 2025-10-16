@@ -58,14 +58,15 @@ export default function Home() {
             onFilesChange={handleFilesChange}
           />
 
-          <SubmitButton
-            isSubmitting={isSubmitting}
-            disabled={files.length === 0}
-            submittingText="Conversion en cours..."
-            className="w-full"
-          >
-            Convertir
-          </SubmitButton>
+          {files.length > 0 && (
+            <SubmitButton
+              isSubmitting={isSubmitting}
+              submittingText="Conversion en cours..."
+              className="w-full"
+            >
+              Convertir
+            </SubmitButton>
+          )}
         </form>
       </div>
     </div>
