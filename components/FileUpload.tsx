@@ -93,7 +93,7 @@ const getFileActionIcon = (
 ) => {
   // Processing state - blue for active conversion
   if (status === "processing") {
-    return <Spinner className="size-4 text-primary" />
+    return <Spinner className="size-4 text-blue-600" />
   }
 
   // Idle state (waiting in queue) - gray spinner
@@ -103,7 +103,7 @@ const getFileActionIcon = (
 
   // Downloading state
   if (status === "downloading") {
-    return <Spinner className="size-4 text-primary" />
+    return <Spinner className="size-4 text-blue-600" />
   }
 
   // Error state - afficher bouton retry
