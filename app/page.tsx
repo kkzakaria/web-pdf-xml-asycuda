@@ -61,11 +61,6 @@ export default function Home() {
       if (conversionState.completedCount === totalFiles) {
         setIsSuccess(true)
         setIsError(false)
-
-        // Masquer l'animation de succès après 3 secondes
-        setTimeout(() => {
-          setIsSuccess(false)
-        }, 3000)
       }
       // Au moins un fichier a échoué
       else if (conversionState.errorCount > 0) {
@@ -178,7 +173,7 @@ export default function Home() {
             accept=".pdf,application/pdf"
             multiple={true}
             onFilesChange={handleFilesChange}
-            disabled={conversionState.isConverting}
+            disabled={conversionState.isConverting || conversionState.isDownloading}
             isProcessing={conversionState.isConverting}
             isSuccess={isSuccess}
             isError={isError}
