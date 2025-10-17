@@ -6,37 +6,48 @@ Intégration complète de l'API de conversion PDF vers XML ASYCUDA dans le front
 
 ## 🎯 Fonctionnalités implémentées
 
-### 1. **Configuration API** (`lib/api-config.ts`)
+### 1. **Architecture de sécurité**
 
-- URL de base configurable via variable d'environnement
-- Endpoints définis pour toutes les opérations (conversion synchrone/asynchrone, statut, téléchargement)
+**Routes Next.js (Proxy sécurisé)** :
+- `app/api/convert/route.ts` - Conversion PDF asynchrone
+- `app/api/jobs/[jobId]/status/route.ts` - Statut de conversion
+- `app/api/jobs/[jobId]/download/route.ts` - Téléchargement XML
+
+Toutes les routes :
+- Ajoutent l'authentification `X-API-Key` côté serveur
+- Valident les variables d'environnement avant chaque appel
+- Masquent l'API externe au client (pas d'exposition publique)
+
+### 2. **Configuration API** (`lib/api-config.ts`)
+
+- Endpoints internes Next.js (routes proxy sécurisées)
+- Plus d'appel direct à l'API externe depuis le client
 - Timeout configurable (2 minutes par défaut)
 
-### 2. **Types TypeScript** (`types/api.ts`)
+### 3. **Types TypeScript** (`types/api.ts`)
 
 - Types complets pour toutes les réponses API
 - Typage strict des statuts de conversion
 - Interfaces pour les métriques de conversion
 - Gestion des erreurs API
 
-### 3. **Service API** (`lib/api-service.ts`)
+### 4. **Service API** (`lib/api-service.ts`)
 
 Fonctions principales :
 
-- `convertPdfToXml()` - Conversion synchrone
 - `convertPdfAsync()` - Démarrage de conversion asynchrone
 - `getJobStatus()` - Récupération du statut d'un job
-- `downloadXmlFile()` - Téléchargement automatique du fichier XML
-- `convertAndDownload()` - Gestion complète du processus (upload → conversion → téléchargement)
+- `getXmlBlob()` - Récupération du fichier XML (Blob)
+- `downloadXmlFile()` - Téléchargement du fichier XML
+- `convertPdfFile()` - Gestion complète du processus (upload → conversion avec polling)
 
 Fonctionnalités :
 
 - Gestion des erreurs avec classe `ApiServiceError`
-- Timeout avec AbortController
-- Polling automatique du statut de conversion
-- Téléchargement automatique des fichiers XML
+- Polling automatique du statut de conversion (toutes les 2 secondes, max 2 minutes)
+- Appels via routes Next.js internes (pas d'exposition des credentials)
 
-### 4. **Hook de conversion** (`hooks/use-pdf-conversion.ts`)
+### 5. **Hook de conversion** (`hooks/use-pdf-conversion.ts`)
 
 - État de conversion pour chaque fichier individuellement
 - Suivi de progression (0-100%)
@@ -44,7 +55,7 @@ Fonctionnalités :
 - Compteurs de fichiers convertis et en erreur
 - Conversion séquentielle pour éviter la surcharge serveur
 
-### 5. **Interface utilisateur** (`app/page.tsx`)
+### 6. **Interface utilisateur** (`app/page.tsx`)
 
 Intégration complète avec :
 
@@ -59,21 +70,26 @@ Intégration complète avec :
 
 ### Variables d'environnement
 
-Fichier `.env.local` :
+Fichier `.env.local` (SERVEUR UNIQUEMENT - jamais exposé au client) :
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
+# Configuration API (côté serveur uniquement)
+API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
+API_KEY=<votre-clé-api>
 ```
+
+**Important** : Ces variables sont utilisées uniquement côté serveur dans les routes Next.js. Aucune variable sensible n'est exposée au client.
 
 ## 📊 Flux de conversion
 
-1. **Upload** : L'utilisateur sélectionne jusqu'à 5 fichiers PDF (50MB max chacun)
+1. **Upload** : L'utilisateur sélectionne jusqu'à 5 fichiers PDF (2MB max chacun)
 2. **Validation** : Vérification du type et de la taille des fichiers
 3. **Conversion** :
-   - Envoi du fichier à l'API via `convertPdfAsync()`
+   - Envoi du fichier via route Next.js `/api/convert`
+   - Route Next.js appelle l'API externe avec authentification `X-API-Key`
    - Polling du statut toutes les 2 secondes (max 2 minutes)
    - Mise à jour de la progression en temps réel
-4. **Téléchargement** : Téléchargement automatique du fichier XML une fois la conversion terminée
+4. **Téléchargement** : Téléchargement automatique du fichier XML via route `/api/jobs/[jobId]/download`
 5. **Feedback** : Affichage du résultat avec animations (succès/erreur)
 
 ## 🎨 États visuels
@@ -132,14 +148,21 @@ NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 5. Ajouter des tests unitaires et E2E
 6. Améliorer les métriques de conversion affichées
 
-## 📦 Fichiers créés
+## 📦 Fichiers créés/modifiés
 
-- `lib/api-config.ts` - Configuration de l'API
-- `lib/api-service.ts` - Service de communication avec l'API
+**Routes API (sécurité)** :
+- `app/api/convert/route.ts` - Proxy pour conversion asynchrone
+- `app/api/jobs/[jobId]/status/route.ts` - Proxy pour statut de job
+- `app/api/jobs/[jobId]/download/route.ts` - Proxy pour téléchargement XML
+
+**Configuration et services** :
+- `lib/api-config.ts` - Endpoints internes Next.js
+- `lib/api-service.ts` - Service d'appels API sécurisés
 - `types/api.ts` - Types TypeScript
 - `hooks/use-pdf-conversion.ts` - Hook de gestion de conversion
-- `.env.local` - Variables d'environnement
+- `.env.local` - Variables d'environnement serveur uniquement
 
-## 📦 Fichiers modifiés
-
-- `app/page.tsx` - Intégration de la conversion dans l'interface
+**Interface** :
+- `app/page.tsx` - Interface utilisateur avec conversion
+- `components/Logo.tsx` - Logo de l'application
+- `app/icon.svg` - Favicon
