@@ -91,9 +91,14 @@ const getFileActionIcon = (
   onDownload?: () => void,
   onRetry?: () => void
 ) => {
-  // Processing state
-  if (disabled || status === "processing") {
-    return <Spinner className="size-4" />
+  // Processing state - blue for active conversion
+  if (status === "processing") {
+    return <Spinner className="size-4 text-primary" />
+  }
+
+  // Idle state (waiting in queue) - gray spinner
+  if (disabled && !status) {
+    return <Spinner className="size-4 text-muted-foreground" />
   }
 
   // Downloading state

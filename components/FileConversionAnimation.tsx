@@ -30,6 +30,11 @@ export function FileConversionAnimation({
       <p className="text-sm font-medium text-muted-foreground">
         Traitement en cours...
       </p>
+
+      {/* Message de patience */}
+      <p className="text-xs text-muted-foreground text-center max-w-md px-4">
+        La conversion peut prendre jusqu&apos;à 2 minutes. Veuillez patienter et ne pas rafraîchir la page.
+      </p>
     </div>
   )
 }
