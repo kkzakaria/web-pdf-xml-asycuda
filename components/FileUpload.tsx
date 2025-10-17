@@ -97,7 +97,7 @@ const getFileActionIcon = (
   }
 
   // Idle state (waiting in queue) - gray spinner
-  if (disabled && !status) {
+  if (status === "idle") {
     return <Spinner className="size-4 text-muted-foreground" />
   }
 

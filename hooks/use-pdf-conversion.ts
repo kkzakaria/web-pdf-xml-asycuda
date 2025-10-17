@@ -70,7 +70,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
     files.forEach((file) => {
       newFileStates.set(file.id, {
         id: file.id,
-        status: "processing",
+        status: "idle", // Tous les fichiers commencent en attente
         progress: 0,
         filename:
           file.file instanceof File
@@ -111,6 +111,16 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
 
       const file = fileWithPreview.file
       const fileId = fileWithPreview.id
+
+      // Marquer ce fichier comme "processing" avant de commencer
+      setState((prev) => {
+        const newFiles = new Map(prev.files)
+        const fileState = newFiles.get(fileId)
+        if (fileState) {
+          fileState.status = "processing"
+        }
+        return { ...prev, files: newFiles }
+      })
 
       try {
         // Mettre à jour la progression
