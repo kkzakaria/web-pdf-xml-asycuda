@@ -164,15 +164,11 @@ export async function getJobResult(jobId: string): Promise<JobResultResponse> {
 }
 
 /**
- * Télécharge le fichier XML résultant d'une conversion
+ * Récupère le fichier XML résultant d'une conversion (sans téléchargement automatique)
  * @param jobId - ID du job
- * @param filename - Nom du fichier à télécharger (optionnel)
  * @returns Blob contenant le fichier XML
  */
-export async function downloadXmlFile(
-  jobId: string,
-  filename?: string
-): Promise<Blob> {
+export async function getXmlBlob(jobId: string): Promise<Blob> {
   const response = await fetch(
     `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.downloadXml(jobId)}`,
     {
@@ -184,29 +180,33 @@ export async function downloadXmlFile(
     await handleApiError(response)
   }
 
-  const blob = await response.blob()
+  return await response.blob()
+}
 
-  // Déclencher le téléchargement automatique
+/**
+ * Télécharge un fichier XML à partir d'un Blob
+ * @param blob - Le Blob contenant le fichier XML
+ * @param filename - Nom du fichier à télécharger
+ */
+export function downloadXmlFile(blob: Blob, filename: string): void {
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = filename || `asycuda-${jobId}.xml`
+  a.download = filename
   document.body.appendChild(a)
   a.click()
   window.URL.revokeObjectURL(url)
   document.body.removeChild(a)
-
-  return blob
 }
 
 /**
- * Convertit et télécharge un fichier PDF en XML ASYCUDA
- * Gère automatiquement le processus complet
+ * Convertit un fichier PDF en XML ASYCUDA (SANS téléchargement automatique)
+ * Gère le processus de conversion avec polling du statut
  * @param file - Fichier PDF à convertir
  * @param onProgress - Callback pour suivre la progression
  * @returns ID du job de conversion
  */
-export async function convertAndDownload(
+export async function convertPdfFile(
   file: File,
   onProgress?: (status: string, progress: number) => void
 ): Promise<string> {
@@ -234,7 +234,7 @@ export async function convertAndDownload(
     if (statusResponse.progress) {
       onProgress?.(
         "Conversion en cours...",
-        30 + statusResponse.progress * 0.6
+        30 + statusResponse.progress * 0.7
       )
     }
 
@@ -260,10 +260,6 @@ export async function convertAndDownload(
     )
   }
 
-  // Télécharger le fichier XML
-  onProgress?.("Téléchargement du fichier...", 90)
-  await downloadXmlFile(jobId, file.name.replace(/\.pdf$/i, ".xml"))
-
-  onProgress?.("Terminé", 100)
+  onProgress?.("Conversion terminée", 100)
   return jobId
 }

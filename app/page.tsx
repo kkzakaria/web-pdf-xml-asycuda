@@ -12,8 +12,17 @@ export default function Home() {
   const [isError, setIsError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
 
-  const [conversionState, { convertFiles, getFileStatus }] =
-    usePdfConversion()
+  const [
+    conversionState,
+    {
+      convertFiles,
+      downloadFile,
+      downloadAllFiles,
+      retryFailedFiles,
+      resetConversion,
+      getFileStatus,
+    },
+  ] = usePdfConversion()
 
   const handleFilesChange = useCallback((newFiles: FileWithPreview[]) => {
     queueMicrotask(() => {
@@ -91,6 +100,65 @@ export default function Home() {
     }
   }
 
+  const handleFileDownload = useCallback(
+    async (fileId: string) => {
+      try {
+        await downloadFile(fileId)
+      } catch (error) {
+        console.error("Erreur lors du téléchargement:", error)
+        setIsError(true)
+        setErrorMessage("Erreur lors du téléchargement du fichier")
+      }
+    },
+    [downloadFile]
+  )
+
+  const handleFileRetry = useCallback(
+    async (fileId: string) => {
+      const fileToRetry = files.find((f) => f.id === fileId)
+      if (!fileToRetry) return
+
+      try {
+        await retryFailedFiles([fileToRetry])
+      } catch (error) {
+        console.error("Erreur lors de la nouvelle tentative:", error)
+      }
+    },
+    [files, retryFailedFiles]
+  )
+
+  const handleDownloadAll = useCallback(async () => {
+    try {
+      await downloadAllFiles()
+    } catch (error) {
+      console.error("Erreur lors du téléchargement groupé:", error)
+      setIsError(true)
+      setErrorMessage("Erreur lors du téléchargement groupé")
+    }
+  }, [downloadAllFiles])
+
+  const handleRetryFailed = useCallback(async () => {
+    try {
+      await retryFailedFiles(files)
+    } catch (error) {
+      console.error("Erreur lors de la nouvelle tentative:", error)
+    }
+  }, [files, retryFailedFiles])
+
+  const handleReset = useCallback(() => {
+    resetConversion()
+    setFiles([])
+    setIsSuccess(false)
+    setIsError(false)
+    setErrorMessage("")
+  }, [resetConversion])
+
+  // Compter les fichiers par statut
+  const successCount = files.filter((f) => f.status === "success").length
+  const errorCount = files.filter((f) => f.status === "error").length
+  const showActionButtons =
+    !conversionState.isConverting && conversionState.files.size > 0
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl">
@@ -120,9 +188,11 @@ export default function Home() {
                 : undefined
             }
             controlledFiles={files}
+            onFileDownload={handleFileDownload}
+            onFileRetry={handleFileRetry}
           />
 
-          {files.length > 0 && !isSuccess && (
+          {files.length > 0 && !showActionButtons && (
             <SubmitButton
               isSubmitting={conversionState.isConverting}
               submittingText="Conversion en cours..."
@@ -131,6 +201,41 @@ export default function Home() {
             >
               Convertir en XML ASYCUDA
             </SubmitButton>
+          )}
+
+          {/* Boutons d'action après conversion */}
+          {showActionButtons && (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {successCount > 1 && (
+                  <SubmitButton
+                    onClick={handleDownloadAll}
+                    className="flex-1"
+                    variant="default"
+                  >
+                    Télécharger tout ({successCount} fichiers ZIP)
+                  </SubmitButton>
+                )}
+
+                {errorCount > 0 && (
+                  <SubmitButton
+                    onClick={handleRetryFailed}
+                    className="flex-1"
+                    variant="outline"
+                  >
+                    Réessayer les échecs ({errorCount})
+                  </SubmitButton>
+                )}
+
+                <SubmitButton
+                  onClick={handleReset}
+                  className="flex-1"
+                  variant="outline"
+                >
+                  Recommencer
+                </SubmitButton>
+              </div>
+            </div>
           )}
         </form>
       </div>
