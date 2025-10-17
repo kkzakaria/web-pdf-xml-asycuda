@@ -34,7 +34,7 @@ export function ProcessingStatesOverlay({
   }
 
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 bg-background">
+    <div className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 bg-background">
       {isError ? (
         <ErrorAnimation
           message={errorMessage}
