@@ -22,10 +22,7 @@ import {
   type FileWithPreview,
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
-import { FileConversionAnimation } from "@/components/FileConversionAnimation"
-import { SuccessAnimation } from "@/components/SuccessAnimation"
-import { WarningAnimation } from "@/components/WarningAnimation"
-import { ErrorAnimation } from "@/components/ErrorAnimation"
+import { ProcessingStatesOverlay } from "@/components/ProcessingStatesOverlay"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
@@ -257,24 +254,19 @@ export default function FileUpload({
           disabled={isDisabled}
         />
 
-        {isError ? (
-          <ErrorAnimation
-            message={errorMessage}
-            description={errorDescription}
-          />
-        ) : isWarning ? (
-          <WarningAnimation
-            message={warningMessage}
-            description={warningDescription}
-          />
-        ) : isSuccess ? (
-          <SuccessAnimation
-            message="Conversion réussie !"
-            description={`${files.length} fichier${files.length > 1 ? "s" : ""} converti${files.length > 1 ? "s" : ""} avec succès`}
-          />
-        ) : isProcessing ? (
-          <FileConversionAnimation />
-        ) : (
+        <ProcessingStatesOverlay
+          isProcessing={isProcessing}
+          isSuccess={isSuccess}
+          isWarning={isWarning}
+          warningMessage={warningMessage}
+          warningDescription={warningDescription}
+          isError={isError}
+          errorMessage={errorMessage}
+          errorDescription={errorDescription}
+          filesCount={files.length}
+        />
+
+        {!isProcessing && !isSuccess && !isWarning && !isError && (
           <div className="flex flex-col items-center justify-center text-center">
             <div
               className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
