@@ -2,7 +2,6 @@
 
 import {
   AlertCircleIcon,
-  CheckCircleIcon,
   DownloadIcon,
   FileArchiveIcon,
   FileIcon,
@@ -13,6 +12,7 @@ import {
   ImageIcon,
   VideoIcon,
   XIcon,
+  RefreshCwIcon,
 } from "lucide-react"
 
 import {
@@ -34,6 +34,7 @@ type FileUploadProps = FileUploadOptions & {
   showFileList?: boolean
   showClearAllButton?: boolean
   disabled?: boolean
+  isProcessing?: boolean
   isSuccess?: boolean
   isWarning?: boolean
   warningMessage?: string
@@ -42,6 +43,7 @@ type FileUploadProps = FileUploadOptions & {
   errorMessage?: string
   errorDescription?: string
   onFileDownload?: (fileId: string) => void
+  onFileRetry?: (fileId: string) => void
   controlledFiles?: FileWithPreview[]
 }
 
@@ -85,57 +87,66 @@ const getFileActionIcon = (
   disabled: boolean,
   onRemove: () => void,
   errorMessage?: string,
-  onDownload?: () => void
+  onDownload?: () => void,
+  onRetry?: () => void
 ) => {
   // Processing state
   if (disabled || status === "processing") {
     return <Spinner className="size-4" />
   }
 
-  // Error state
-  if (status === "error") {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="-me-2 size-8 flex items-center justify-center">
-            <AlertCircleIcon
-              className="size-4 text-destructive"
-              aria-hidden="true"
-            />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent
-          side="left"
-          className="bg-destructive/10 text-destructive border border-destructive/20"
-          hideArrow
-        >
-          <p className="text-xs max-w-xs">
-            {errorMessage || "Une erreur est survenue lors du traitement"}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    )
-  }
-
-  // Success state
-  if (status === "success") {
-    return (
-      <CheckCircleIcon
-        className="size-4 text-green-600"
-        aria-hidden="true"
-      />
-    )
-  }
-
   // Downloading state
   if (status === "downloading") {
+    return <Spinner className="size-4 text-primary" />
+  }
+
+  // Error state - afficher bouton retry
+  if (status === "error") {
+    return (
+      <div className="flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="size-8 flex items-center justify-center">
+              <AlertCircleIcon
+                className="size-4 text-destructive"
+                aria-hidden="true"
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent
+            side="left"
+            className="bg-destructive/10 text-destructive border border-destructive/20"
+            hideArrow
+          >
+            <p className="text-xs max-w-xs">
+              {errorMessage || "Une erreur est survenue lors du traitement"}
+            </p>
+          </TooltipContent>
+        </Tooltip>
+        {onRetry && (
+          <Button
+            size="icon"
+            variant="ghost"
+            className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-primary"
+            onClick={onRetry}
+            aria-label="Réessayer la conversion"
+          >
+            <RefreshCwIcon className="size-4" aria-hidden="true" />
+          </Button>
+        )}
+      </div>
+    )
+  }
+
+  // Success state - afficher bouton download
+  if (status === "success") {
     return (
       <Button
         size="icon"
         variant="ghost"
-        className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-primary"
+        className="-me-2 size-8 text-green-600 hover:bg-transparent hover:text-green-700"
         onClick={onDownload}
-        aria-label="Télécharger le fichier"
+        aria-label="Télécharger le fichier XML"
       >
         <DownloadIcon className="size-4" aria-hidden="true" />
       </Button>
@@ -168,6 +179,7 @@ export default function FileUpload({
   onFilesChange,
   onFilesAdded,
   disabled = false,
+  isProcessing = false,
   isSuccess = false,
   isWarning = false,
   warningMessage,
@@ -176,6 +188,7 @@ export default function FileUpload({
   errorMessage,
   errorDescription,
   onFileDownload,
+  onFileRetry,
   controlledFiles,
 }: FileUploadProps) {
   const [
@@ -246,7 +259,7 @@ export default function FileUpload({
             message="Conversion réussie !"
             description={`${files.length} fichier${files.length > 1 ? "s" : ""} converti${files.length > 1 ? "s" : ""} avec succès`}
           />
-        ) : disabled ? (
+        ) : isProcessing ? (
           <FileConversionAnimation />
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
@@ -333,7 +346,8 @@ export default function FileUpload({
                 disabled,
                 () => removeFile(file.id),
                 file.errorMessage,
-                onFileDownload ? () => onFileDownload(file.id) : undefined
+                onFileDownload ? () => onFileDownload(file.id) : undefined,
+                onFileRetry ? () => onFileRetry(file.id) : undefined
               )}
             </div>
           ))}
