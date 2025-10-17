@@ -18,10 +18,14 @@ export type FileMetadata = {
   id: string
 }
 
+export type FileStatus = "idle" | "processing" | "downloading" | "success" | "error"
+
 export type FileWithPreview = {
   file: File | FileMetadata
   id: string
   preview?: string
+  status?: FileStatus
+  errorMessage?: string
 }
 
 export type FileUploadOptions = {

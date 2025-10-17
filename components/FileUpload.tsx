@@ -2,6 +2,8 @@
 
 import {
   AlertCircleIcon,
+  CheckCircleIcon,
+  DownloadIcon,
   FileArchiveIcon,
   FileIcon,
   FileSpreadsheetIcon,
@@ -17,6 +19,7 @@ import {
   formatBytes,
   useFileUpload,
   type FileUploadOptions,
+  type FileWithPreview,
 } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import { FileConversionAnimation } from "@/components/FileConversionAnimation"
@@ -24,6 +27,7 @@ import { SuccessAnimation } from "@/components/SuccessAnimation"
 import { WarningAnimation } from "@/components/WarningAnimation"
 import { ErrorAnimation } from "@/components/ErrorAnimation"
 import { Spinner } from "@/components/ui/spinner"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 
 type FileUploadProps = FileUploadOptions & {
   className?: string
@@ -37,6 +41,8 @@ type FileUploadProps = FileUploadOptions & {
   isError?: boolean
   errorMessage?: string
   errorDescription?: string
+  onFileDownload?: (fileId: string) => void
+  controlledFiles?: FileWithPreview[]
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -74,6 +80,82 @@ const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
   return <FileIcon className="size-4 opacity-60" />
 }
 
+const getFileActionIcon = (
+  status: string | undefined,
+  disabled: boolean,
+  onRemove: () => void,
+  errorMessage?: string,
+  onDownload?: () => void
+) => {
+  // Processing state
+  if (disabled || status === "processing") {
+    return <Spinner className="size-4" />
+  }
+
+  // Error state
+  if (status === "error") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="-me-2 size-8 flex items-center justify-center">
+            <AlertCircleIcon
+              className="size-4 text-destructive"
+              aria-hidden="true"
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="left"
+          className="bg-destructive/10 text-destructive border border-destructive/20"
+          hideArrow
+        >
+          <p className="text-xs max-w-xs">
+            {errorMessage || "Une erreur est survenue lors du traitement"}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    )
+  }
+
+  // Success state
+  if (status === "success") {
+    return (
+      <CheckCircleIcon
+        className="size-4 text-green-600"
+        aria-hidden="true"
+      />
+    )
+  }
+
+  // Downloading state
+  if (status === "downloading") {
+    return (
+      <Button
+        size="icon"
+        variant="ghost"
+        className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-primary"
+        onClick={onDownload}
+        aria-label="Télécharger le fichier"
+      >
+        <DownloadIcon className="size-4" aria-hidden="true" />
+      </Button>
+    )
+  }
+
+  // Default: show delete button
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
+      onClick={onRemove}
+      aria-label="Supprimer le fichier"
+    >
+      <XIcon className="size-4" aria-hidden="true" />
+    </Button>
+  )
+}
+
 export default function FileUpload({
   className,
   showFileList = true,
@@ -93,9 +175,11 @@ export default function FileUpload({
   isError = false,
   errorMessage,
   errorDescription,
+  onFileDownload,
+  controlledFiles,
 }: FileUploadProps) {
   const [
-    { files, isDragging, errors },
+    { files: internalFiles, isDragging, errors },
     {
       handleDragEnter,
       handleDragLeave,
@@ -115,6 +199,9 @@ export default function FileUpload({
     onFilesChange,
     onFilesAdded,
   })
+
+  // Use controlled files if provided, otherwise use internal state
+  const files = controlledFiles ?? internalFiles
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
@@ -241,20 +328,13 @@ export default function FileUpload({
                 </div>
               </div>
 
-              <Button
-                size="icon"
-                variant="ghost"
-                className="-me-2 size-8 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
-                onClick={() => removeFile(file.id)}
-                aria-label="Supprimer le fichier"
-                disabled={disabled}
-              >
-                {disabled ? (
-                  <Spinner className="size-4" />
-                ) : (
-                  <XIcon className="size-4" aria-hidden="true" />
-                )}
-              </Button>
+              {getFileActionIcon(
+                file.status,
+                disabled,
+                () => removeFile(file.id),
+                file.errorMessage,
+                onFileDownload ? () => onFileDownload(file.id) : undefined
+              )}
             </div>
           ))}
 
