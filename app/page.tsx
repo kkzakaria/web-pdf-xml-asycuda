@@ -179,6 +179,7 @@ export default function Home() {
             multiple={true}
             onFilesChange={handleFilesChange}
             disabled={conversionState.isConverting}
+            isProcessing={conversionState.isConverting}
             isSuccess={isSuccess}
             isError={isError}
             errorMessage={errorMessage}

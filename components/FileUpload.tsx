@@ -34,6 +34,7 @@ type FileUploadProps = FileUploadOptions & {
   showFileList?: boolean
   showClearAllButton?: boolean
   disabled?: boolean
+  isProcessing?: boolean
   isSuccess?: boolean
   isWarning?: boolean
   warningMessage?: string
@@ -178,6 +179,7 @@ export default function FileUpload({
   onFilesChange,
   onFilesAdded,
   disabled = false,
+  isProcessing = false,
   isSuccess = false,
   isWarning = false,
   warningMessage,
@@ -257,7 +259,7 @@ export default function FileUpload({
             message="Conversion réussie !"
             description={`${files.length} fichier${files.length > 1 ? "s" : ""} converti${files.length > 1 ? "s" : ""} avec succès`}
           />
-        ) : disabled ? (
+        ) : isProcessing ? (
           <FileConversionAnimation />
         ) : (
           <div className="flex flex-col items-center justify-center text-center">
