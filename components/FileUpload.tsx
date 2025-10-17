@@ -228,32 +228,12 @@ export default function FileUpload({
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
+  const hasActiveState = isProcessing || isSuccess || isWarning || isError
 
   return (
     <div className={`flex flex-col gap-2 ${className || ""}`}>
-      {/* Zone de drop */}
-      <div
-        role="button"
-        onClick={isDisabled ? undefined : openFileDialog}
-        onDragEnter={isDisabled ? undefined : handleDragEnter}
-        onDragLeave={isDisabled ? undefined : handleDragLeave}
-        onDragOver={isDisabled ? undefined : handleDragOver}
-        onDrop={isDisabled ? undefined : handleDrop}
-        data-dragging={isDragging || undefined}
-        data-disabled={isDisabled || undefined}
-        className={`flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 ${
-          isDisabled
-            ? "cursor-not-allowed bg-muted/30"
-            : "hover:bg-accent/50 cursor-pointer"
-        }`}
-      >
-        <input
-          {...getInputProps()}
-          className="sr-only"
-          aria-label="Upload files"
-          disabled={isDisabled}
-        />
-
+      {/* États de traitement OU Zone de drop */}
+      {hasActiveState ? (
         <ProcessingStatesOverlay
           isProcessing={isProcessing}
           isSuccess={isSuccess}
@@ -265,8 +245,29 @@ export default function FileUpload({
           errorDescription={errorDescription}
           filesCount={files.length}
         />
+      ) : (
+        <div
+          role="button"
+          onClick={isDisabled ? undefined : openFileDialog}
+          onDragEnter={isDisabled ? undefined : handleDragEnter}
+          onDragLeave={isDisabled ? undefined : handleDragLeave}
+          onDragOver={isDisabled ? undefined : handleDragOver}
+          onDrop={isDisabled ? undefined : handleDrop}
+          data-dragging={isDragging || undefined}
+          data-disabled={isDisabled || undefined}
+          className={`flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 ${
+            isDisabled
+              ? "cursor-not-allowed bg-muted/30"
+              : "hover:bg-accent/50 cursor-pointer"
+          }`}
+        >
+          <input
+            {...getInputProps()}
+            className="sr-only"
+            aria-label="Upload files"
+            disabled={isDisabled}
+          />
 
-        {!isProcessing && !isSuccess && !isWarning && !isError && (
           <div className="flex flex-col items-center justify-center text-center">
             <div
               className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
@@ -304,8 +305,8 @@ export default function FileUpload({
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Affichage des erreurs */}
       {errors.length > 0 && (
