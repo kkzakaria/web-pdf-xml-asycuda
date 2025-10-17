@@ -55,45 +55,8 @@ function createTimeoutController(timeout: number): AbortController {
   return controller
 }
 
-/**
- * Convertit un fichier PDF en XML ASYCUDA (synchrone)
- * @param file - Fichier PDF à convertir
- * @param options - Options de la requête
- * @returns Résultat de la conversion
- */
-export async function convertPdfToXml(
-  file: File,
-  options: ApiRequestOptions = {}
-): Promise<ConvertResponse> {
-  const { timeout = API_CONFIG.timeout } = options
-
-  const formData = new FormData()
-  formData.append("file", file)
-
-  const controller = createTimeoutController(timeout)
-
-  try {
-    const response = await fetch(
-      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.convert}`,
-      {
-        method: "POST",
-        body: formData,
-        signal: controller.signal,
-      }
-    )
-
-    if (!response.ok) {
-      await handleApiError(response)
-    }
-
-    return (await response.json()) as ConvertResponse
-  } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      throw new ApiServiceError("La conversion a expiré (timeout)", 408)
-    }
-    throw error
-  }
-}
+// Note: La conversion synchrone n'est plus utilisée
+// Nous utilisons maintenant uniquement la conversion asynchrone via convertPdfAsync()
 
 /**
  * Démarre une conversion PDF en XML ASYCUDA (asynchrone)
@@ -106,13 +69,10 @@ export async function convertPdfAsync(
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await fetch(
-    `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.convertAsync}`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  )
+  const response = await fetch(API_CONFIG.endpoints.convertAsync, {
+    method: "POST",
+    body: formData,
+  })
 
   if (!response.ok) {
     await handleApiError(response)
@@ -129,12 +89,9 @@ export async function convertPdfAsync(
 export async function getJobStatus(
   jobId: string
 ): Promise<JobStatusResponse> {
-  const response = await fetch(
-    `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.jobStatus(jobId)}`,
-    {
-      method: "GET",
-    }
-  )
+  const response = await fetch(API_CONFIG.endpoints.jobStatus(jobId), {
+    method: "GET",
+  })
 
   if (!response.ok) {
     await handleApiError(response)
@@ -143,25 +100,8 @@ export async function getJobStatus(
   return (await response.json()) as JobStatusResponse
 }
 
-/**
- * Récupère le résultat complet d'un job de conversion
- * @param jobId - ID du job
- * @returns Résultat du job
- */
-export async function getJobResult(jobId: string): Promise<JobResultResponse> {
-  const response = await fetch(
-    `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.jobResult(jobId)}`,
-    {
-      method: "GET",
-    }
-  )
-
-  if (!response.ok) {
-    await handleApiError(response)
-  }
-
-  return (await response.json()) as JobResultResponse
-}
+// Note: getJobResult() n'est plus utilisé
+// Nous utilisons getJobStatus() et getXmlBlob() séparément
 
 /**
  * Récupère le fichier XML résultant d'une conversion (sans téléchargement automatique)
@@ -169,12 +109,9 @@ export async function getJobResult(jobId: string): Promise<JobResultResponse> {
  * @returns Blob contenant le fichier XML
  */
 export async function getXmlBlob(jobId: string): Promise<Blob> {
-  const response = await fetch(
-    `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.downloadXml(jobId)}`,
-    {
-      method: "GET",
-    }
-  )
+  const response = await fetch(API_CONFIG.endpoints.downloadXml(jobId), {
+    method: "GET",
+  })
 
   if (!response.ok) {
     await handleApiError(response)

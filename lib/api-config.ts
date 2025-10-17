@@ -1,17 +1,18 @@
 /**
  * Configuration de l'API PDF-XML-ASYCUDA
+ *
+ * Les appels API passent maintenant par les routes Next.js (/app/api/*)
+ * qui font proxy vers l'API externe avec authentification côté serveur.
+ *
+ * Aucune variable d'environnement n'est exposée au client.
  */
 
 export const API_CONFIG = {
-  baseUrl:
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://pdf-xml-asycuda-api.onrender.com",
+  // Routes Next.js internes (proxy sécurisé)
   endpoints: {
-    convert: "/api/v1/convert",
-    convertAsync: "/api/v1/convert/async",
-    jobStatus: (jobId: string) => `/api/v1/convert/${jobId}`,
-    jobResult: (jobId: string) => `/api/v1/convert/${jobId}/result`,
-    downloadXml: (jobId: string) => `/api/v1/convert/${jobId}/download`,
+    convertAsync: "/api/convert",
+    jobStatus: (jobId: string) => `/api/jobs/${jobId}/status`,
+    downloadXml: (jobId: string) => `/api/jobs/${jobId}/download`,
   },
   timeout: 120000, // 2 minutes pour la conversion synchrone
 } as const
