@@ -11,6 +11,7 @@ export default function Home() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [isError, setIsError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [fileUploadKey, setFileUploadKey] = useState(0)
 
   const [
     conversionState,
@@ -31,6 +32,13 @@ export default function Home() {
       setIsError(false)
       setErrorMessage("")
     })
+  }, [])
+
+  const handleClearFiles = useCallback(() => {
+    setFiles([])
+    setIsSuccess(false)
+    setIsError(false)
+    setErrorMessage("")
   }, [])
 
   // Mettre à jour les statuts des fichiers en fonction de la conversion
@@ -146,6 +154,7 @@ export default function Home() {
     setIsSuccess(false)
     setIsError(false)
     setErrorMessage("")
+    setFileUploadKey((prev) => prev + 1)
   }, [resetConversion])
 
   // Compter les fichiers par statut
@@ -168,11 +177,13 @@ export default function Home() {
           </div>
 
           <FileUpload
+            key={fileUploadKey}
             maxFiles={5}
             maxSize={50 * 1024 * 1024}
             accept=".pdf,application/pdf"
             multiple={true}
             onFilesChange={handleFilesChange}
+            onClearFiles={handleClearFiles}
             disabled={conversionState.isConverting || conversionState.isDownloading}
             isProcessing={conversionState.isConverting}
             isSuccess={isSuccess}

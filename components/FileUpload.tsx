@@ -45,6 +45,7 @@ type FileUploadProps = FileUploadOptions & {
   onFileDownload?: (fileId: string) => void
   onFileRetry?: (fileId: string) => void
   controlledFiles?: FileWithPreview[]
+  onClearFiles?: () => void
 }
 
 const getFileIcon = (file: { file: File | { type: string; name: string } }) => {
@@ -190,6 +191,7 @@ export default function FileUpload({
   onFileDownload,
   onFileRetry,
   controlledFiles,
+  onClearFiles,
 }: FileUploadProps) {
   const [
     { files: internalFiles, isDragging, errors },
@@ -200,7 +202,7 @@ export default function FileUpload({
       handleDrop,
       openFileDialog,
       removeFile,
-      clearFiles,
+      clearFiles: clearInternalFiles,
       getInputProps,
     },
   ] = useFileUpload({
@@ -215,6 +217,12 @@ export default function FileUpload({
 
   // Use controlled files if provided, otherwise use internal state
   const files = controlledFiles ?? internalFiles
+
+  // Clear both internal and external state
+  const clearFiles = () => {
+    clearInternalFiles()
+    onClearFiles?.()
+  }
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
