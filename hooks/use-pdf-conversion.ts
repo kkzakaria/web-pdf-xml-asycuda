@@ -20,6 +20,7 @@ export type FileConversionState = {
   jobId?: string
   error?: string
   filename?: string
+  retryCount?: number // Nombre de tentatives effectuées
 }
 
 /**
@@ -57,6 +58,9 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
     errorCount: 0,
   })
 
+  // Configuration du système de retry automatique
+  const MAX_RETRIES = 2 // 1 tentative initiale + 1 retry automatique
+
   /**
    * Convertit une liste de fichiers (SANS téléchargement automatique)
    * @param files - Fichiers à convertir
@@ -72,6 +76,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
         id: file.id,
         status: "idle", // Tous les fichiers commencent en attente
         progress: 0,
+        retryCount: 0, // Initialiser le compteur de tentatives
         filename:
           file.file instanceof File
             ? file.file.name.replace(/\.pdf$/i, ".xml")
@@ -112,67 +117,83 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
       const file = fileWithPreview.file
       const fileId = fileWithPreview.id
 
-      // Marquer ce fichier comme "processing" avant de commencer
-      setState((prev) => {
-        const newFiles = new Map(prev.files)
-        const fileState = newFiles.get(fileId)
-        if (fileState) {
-          fileState.status = "processing"
-        }
-        return { ...prev, files: newFiles }
-      })
+      // Boucle de retry automatique
+      let attemptNumber = 1
+      let conversionSuccess = false
 
-      try {
-        // Mettre à jour la progression
-        const onProgress = (status: string, progress: number) => {
+      while (attemptNumber <= MAX_RETRIES && !conversionSuccess) {
+        // Marquer ce fichier comme "processing" avant de commencer
+        setState((prev) => {
+          const newFiles = new Map(prev.files)
+          const fileState = newFiles.get(fileId)
+          if (fileState) {
+            fileState.status = "processing"
+            fileState.retryCount = attemptNumber
+          }
+          return { ...prev, files: newFiles }
+        })
+
+        try {
+          // Mettre à jour la progression
+          const onProgress = (status: string, progress: number) => {
+            setState((prev) => {
+              const newFiles = new Map(prev.files)
+              const fileState = newFiles.get(fileId)
+              if (fileState) {
+                fileState.progress = progress
+              }
+              return { ...prev, files: newFiles }
+            })
+          }
+
+          // Convertir (SANS télécharger)
+          const jobId = await convertPdfFile(file, onProgress)
+
+          // Marquer comme succès
           setState((prev) => {
             const newFiles = new Map(prev.files)
             const fileState = newFiles.get(fileId)
             if (fileState) {
-              fileState.progress = progress
+              fileState.status = "success"
+              fileState.progress = 100
+              fileState.jobId = jobId
             }
-            return { ...prev, files: newFiles }
+            return {
+              ...prev,
+              files: newFiles,
+              completedCount: prev.completedCount + 1,
+            }
           })
+
+          conversionSuccess = true // Succès, sortir de la boucle de retry
+        } catch (error) {
+          const errorMessage =
+            error instanceof ApiServiceError
+              ? error.message
+              : "Une erreur inconnue est survenue"
+
+          // Si c'est la dernière tentative, marquer comme erreur définitive
+          if (attemptNumber >= MAX_RETRIES) {
+            setState((prev) => {
+              const newFiles = new Map(prev.files)
+              const fileState = newFiles.get(fileId)
+              if (fileState) {
+                fileState.status = "error"
+                fileState.error = `${errorMessage} (${attemptNumber} tentative${attemptNumber > 1 ? "s" : ""})`
+              }
+              return {
+                ...prev,
+                files: newFiles,
+                errorCount: prev.errorCount + 1,
+              }
+            })
+          } else {
+            // Attendre un court délai avant de réessayer (500ms)
+            await new Promise((resolve) => setTimeout(resolve, 500))
+          }
+
+          attemptNumber++
         }
-
-        // Convertir (SANS télécharger)
-        const jobId = await convertPdfFile(file, onProgress)
-
-        // Marquer comme succès
-        setState((prev) => {
-          const newFiles = new Map(prev.files)
-          const fileState = newFiles.get(fileId)
-          if (fileState) {
-            fileState.status = "success"
-            fileState.progress = 100
-            fileState.jobId = jobId
-          }
-          return {
-            ...prev,
-            files: newFiles,
-            completedCount: prev.completedCount + 1,
-          }
-        })
-      } catch (error) {
-        // Marquer comme erreur
-        const errorMessage =
-          error instanceof ApiServiceError
-            ? error.message
-            : "Une erreur inconnue est survenue"
-
-        setState((prev) => {
-          const newFiles = new Map(prev.files)
-          const fileState = newFiles.get(fileId)
-          if (fileState) {
-            fileState.status = "error"
-            fileState.error = errorMessage
-          }
-          return {
-            ...prev,
-            files: newFiles,
-            errorCount: prev.errorCount + 1,
-          }
-        })
       }
     }
 
