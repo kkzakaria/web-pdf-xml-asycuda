@@ -191,7 +191,7 @@ export const useFileUpload = (
         maxFiles !== Infinity &&
         state.files.length + newFilesArray.length > maxFiles
       ) {
-        errors.push(`You can only upload a maximum of ${maxFiles} files.`)
+        errors.push(`Vous ne pouvez téléverser que ${maxFiles} fichiers maximum.`)
         setState((prev) => ({ ...prev, errors }))
         return
       }

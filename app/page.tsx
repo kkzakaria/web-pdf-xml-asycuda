@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import FileUpload from "@/components/FileUpload"
 import { SubmitButton } from "@/components/SubmitButton"
+import { Logo } from "@/components/Logo"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 import { usePdfConversion } from "@/hooks/use-pdf-conversion"
 
@@ -167,8 +168,11 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl">
         <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          <div className="text-center space-y-3">
+            <div className="flex justify-center -mb-2">
+              <Logo size={80} />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
               Conversion PDF vers XML ASYCUDA
             </h1>
             <p className="text-muted-foreground">
