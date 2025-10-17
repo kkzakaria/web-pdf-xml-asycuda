@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     externalFormData.append("file", file)
 
     // Appeler l'API externe avec authentification
-    const response = await fetch(`${apiBaseUrl}/convert-async`, {
+    const response = await fetch(`${apiBaseUrl}/convert/async`, {
       method: "POST",
       headers: {
         "X-API-Key": apiKey,

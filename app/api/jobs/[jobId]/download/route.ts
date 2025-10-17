@@ -27,7 +27,7 @@ export async function GET(
     }
 
     // Appeler l'API externe avec authentification
-    const response = await fetch(`${apiBaseUrl}/jobs/${jobId}/download`, {
+    const response = await fetch(`${apiBaseUrl}/convert/${jobId}/download`, {
       method: "GET",
       headers: {
         "X-API-Key": apiKey,
