@@ -7,18 +7,22 @@ Intégration complète de l'API de conversion PDF vers XML ASYCUDA dans le front
 ## 🎯 Fonctionnalités implémentées
 
 ### 1. **Configuration API** (`lib/api-config.ts`)
+
 - URL de base configurable via variable d'environnement
 - Endpoints définis pour toutes les opérations (conversion synchrone/asynchrone, statut, téléchargement)
 - Timeout configurable (2 minutes par défaut)
 
 ### 2. **Types TypeScript** (`types/api.ts`)
+
 - Types complets pour toutes les réponses API
 - Typage strict des statuts de conversion
 - Interfaces pour les métriques de conversion
 - Gestion des erreurs API
 
 ### 3. **Service API** (`lib/api-service.ts`)
+
 Fonctions principales :
+
 - `convertPdfToXml()` - Conversion synchrone
 - `convertPdfAsync()` - Démarrage de conversion asynchrone
 - `getJobStatus()` - Récupération du statut d'un job
@@ -26,12 +30,14 @@ Fonctions principales :
 - `convertAndDownload()` - Gestion complète du processus (upload → conversion → téléchargement)
 
 Fonctionnalités :
+
 - Gestion des erreurs avec classe `ApiServiceError`
 - Timeout avec AbortController
 - Polling automatique du statut de conversion
 - Téléchargement automatique des fichiers XML
 
 ### 4. **Hook de conversion** (`hooks/use-pdf-conversion.ts`)
+
 - État de conversion pour chaque fichier individuellement
 - Suivi de progression (0-100%)
 - Gestion des statuts : idle, processing, success, error
@@ -39,7 +45,9 @@ Fonctionnalités :
 - Conversion séquentielle pour éviter la surcharge serveur
 
 ### 5. **Interface utilisateur** (`app/page.tsx`)
+
 Intégration complète avec :
+
 - Hook `usePdfConversion` pour la logique métier
 - Mise à jour dynamique des statuts de fichiers
 - Animations de succès/erreur selon les résultats
@@ -50,7 +58,9 @@ Intégration complète avec :
 ## 🔧 Configuration
 
 ### Variables d'environnement
+
 Fichier `.env.local` :
+
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 ```
@@ -69,12 +79,14 @@ NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 ## 🎨 États visuels
 
 ### Statuts des fichiers
+
 - **idle** : Fichier en attente
 - **processing** : Conversion en cours (avec spinner)
 - **success** : Conversion réussie (icône verte)
 - **error** : Échec de conversion (icône rouge + tooltip avec message d'erreur)
 
 ### Animations globales
+
 - **Conversion en cours** : Animation de conversion
 - **Succès** : Animation de succès (3 secondes)
 - **Erreur** : Animation d'erreur avec message détaillé
@@ -82,12 +94,14 @@ NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 ## 🧪 Tests
 
 ### Validation
+
 - ✅ Compilation TypeScript sans erreur
 - ✅ Linting ESLint sans warning
 - ✅ Interface se charge correctement
 - ✅ Serveur de développement fonctionne (port 3001)
 
 ### À tester manuellement
+
 - [ ] Upload de fichiers PDF valides
 - [ ] Conversion réussie et téléchargement XML
 - [ ] Gestion des erreurs (fichier invalide, timeout, etc.)
@@ -97,12 +111,14 @@ NEXT_PUBLIC_API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 ## 📝 Notes techniques
 
 ### Choix d'implémentation
+
 - **Conversion séquentielle** : Les fichiers sont convertis un par un pour éviter de surcharger l'API
 - **Polling intelligent** : Attente de 2 secondes entre chaque vérification de statut
 - **Téléchargement automatique** : Le fichier XML se télécharge automatiquement après conversion
 - **État contrôlé** : Le composant FileUpload utilise `controlledFiles` pour synchroniser l'état avec la conversion
 
 ### Limitations connues
+
 - Pas de gestion du mode batch (conversion parallèle de plusieurs fichiers)
 - Pas de persistance de session (l'état est perdu au rechargement)
 - Timeout fixe de 2 minutes pour la conversion
