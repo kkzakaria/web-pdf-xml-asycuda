@@ -172,14 +172,14 @@ export default function Home() {
               Conversion PDF vers XML ASYCUDA
             </h1>
             <p className="text-muted-foreground">
-              Téléversez jusqu&apos;à 5 fichiers PDF de 50MB maximum chacun
+              Téléversez jusqu&apos;à 5 fichiers PDF de 2MB maximum chacun
             </p>
           </div>
 
           <FileUpload
             key={fileUploadKey}
             maxFiles={5}
-            maxSize={50 * 1024 * 1024}
+            maxSize={2 * 1024 * 1024}
             accept=".pdf,application/pdf"
             multiple={true}
             onFilesChange={handleFilesChange}
