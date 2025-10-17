@@ -31,10 +31,12 @@ export function FileConversionAnimation({
         Traitement en cours...
       </p>
 
-      {/* Message de patience */}
-      <p className="text-xs text-muted-foreground text-center max-w-md px-4">
-        La conversion peut prendre jusqu&apos;à 2 minutes. Veuillez patienter et ne pas rafraîchir la page.
-      </p>
+      {/* Message de patience en surbrillance */}
+      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-lg px-4 py-2.5 max-w-md">
+        <p className="text-xs text-amber-900 dark:text-amber-100 text-center font-medium">
+          La conversion peut prendre jusqu&apos;à 2 minutes. Veuillez patienter et ne pas rafraîchir la page.
+        </p>
+      </div>
     </div>
   )
 }
