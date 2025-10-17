@@ -335,9 +335,11 @@ export default function FileUpload({
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <p className="truncate text-[13px] font-medium">
-                    {file.file instanceof File
-                      ? file.file.name
-                      : file.file.name}
+                    {file.status === "success" && file.outputFileName
+                      ? file.outputFileName
+                      : file.file instanceof File
+                        ? file.file.name
+                        : file.file.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {formatBytes(

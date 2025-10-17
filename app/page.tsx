@@ -54,6 +54,7 @@ export default function Home() {
         ...file,
         status: conversionStatus.status,
         errorMessage: conversionStatus.error,
+        outputFileName: conversionStatus.filename,
       }
     })
 

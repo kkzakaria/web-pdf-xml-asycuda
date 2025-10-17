@@ -26,6 +26,7 @@ export type FileWithPreview = {
   preview?: string
   status?: FileStatus
   errorMessage?: string
+  outputFileName?: string // Nom du fichier converti (ex: fichier.xml)
 }
 
 export type FileUploadOptions = {
