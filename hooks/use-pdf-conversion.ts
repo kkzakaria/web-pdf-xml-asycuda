@@ -57,14 +57,16 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
 
   /**
    * Convertit une liste de fichiers (SANS téléchargement automatique)
+   * @param files - Fichiers à convertir
+   * @param isRetry - Si true, conserve les fichiers existants non concernés
    */
-  const convertFiles = useCallback(async (files: FileWithPreview[]) => {
+  const convertFiles = useCallback(async (files: FileWithPreview[], isRetry = false) => {
     if (files.length === 0) return
 
-    // Réinitialiser l'état
-    const fileStates = new Map<string, FileConversionState>()
+    // Préparer les états des nouveaux fichiers
+    const newFileStates = new Map<string, FileConversionState>()
     files.forEach((file) => {
-      fileStates.set(file.id, {
+      newFileStates.set(file.id, {
         id: file.id,
         status: "processing",
         progress: 0,
@@ -75,11 +77,27 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
       })
     })
 
-    setState({
-      isConverting: true,
-      files: fileStates,
-      completedCount: 0,
-      errorCount: 0,
+    setState((prev) => {
+      if (isRetry) {
+        // Mode retry : conserver les fichiers existants, mettre à jour seulement ceux en retry
+        const mergedFiles = new Map(prev.files)
+        newFileStates.forEach((fileState, id) => {
+          mergedFiles.set(id, fileState)
+        })
+        return {
+          ...prev,
+          isConverting: true,
+          files: mergedFiles,
+        }
+      } else {
+        // Mode normal : réinitialiser complètement
+        return {
+          isConverting: true,
+          files: newFileStates,
+          completedCount: 0,
+          errorCount: 0,
+        }
+      }
     })
 
     // Convertir les fichiers un par un (pas en parallèle pour éviter la surcharge)
@@ -146,10 +164,28 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
     }
 
     // Conversion terminée
-    setState((prev) => ({
-      ...prev,
-      isConverting: false,
-    }))
+    setState((prev) => {
+      if (isRetry) {
+        // Recalculer les compteurs en mode retry
+        let completedCount = 0
+        let errorCount = 0
+        prev.files.forEach((fileState) => {
+          if (fileState.status === "success") completedCount++
+          if (fileState.status === "error") errorCount++
+        })
+        return {
+          ...prev,
+          isConverting: false,
+          completedCount,
+          errorCount,
+        }
+      } else {
+        return {
+          ...prev,
+          isConverting: false,
+        }
+      }
+    })
   }, [])
 
   /**
@@ -241,7 +277,8 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
 
       if (filesToRetry.length === 0) return
 
-      await convertFiles(filesToRetry)
+      // Utiliser le mode retry pour conserver les fichiers non concernés
+      await convertFiles(filesToRetry, true)
     },
     [state.files, convertFiles]
   )
