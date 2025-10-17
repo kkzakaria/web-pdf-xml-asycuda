@@ -27,6 +27,7 @@ export type FileConversionState = {
  */
 export type ConversionState = {
   isConverting: boolean
+  isDownloading: boolean
   files: Map<string, FileConversionState>
   completedCount: number
   errorCount: number
@@ -50,6 +51,7 @@ export type ConversionActions = {
 export function usePdfConversion(): [ConversionState, ConversionActions] {
   const [state, setState] = useState<ConversionState>({
     isConverting: false,
+    isDownloading: false,
     files: new Map(),
     completedCount: 0,
     errorCount: 0,
@@ -93,6 +95,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
         // Mode normal : réinitialiser complètement
         return {
           isConverting: true,
+          isDownloading: false,
           files: newFileStates,
           completedCount: 0,
           errorCount: 0,
@@ -195,12 +198,12 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
     const fileState = state.files.get(fileId)
     if (!fileState?.jobId || !fileState.filename) return
 
-    // Mettre à jour le statut à "downloading"
+    // Mettre à jour le statut à "downloading" et activer isDownloading
     setState((prev) => {
       const newFiles = new Map(prev.files)
       const file = newFiles.get(fileId)
       if (file) file.status = "downloading"
-      return { ...prev, files: newFiles }
+      return { ...prev, isDownloading: true, files: newFiles }
     })
 
     try {
@@ -208,15 +211,15 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
       const blob = await getXmlBlob(fileState.jobId)
       downloadXmlFile(blob, fileState.filename)
 
-      // Retour à l'état "success"
+      // Retour à l'état "success" et désactiver isDownloading
       setState((prev) => {
         const newFiles = new Map(prev.files)
         const file = newFiles.get(fileId)
         if (file) file.status = "success"
-        return { ...prev, files: newFiles }
+        return { ...prev, isDownloading: false, files: newFiles }
       })
     } catch (error) {
-      // En cas d'erreur, marquer comme erreur
+      // En cas d'erreur, marquer comme erreur et désactiver isDownloading
       const errorMessage =
         error instanceof ApiServiceError
           ? error.message
@@ -229,7 +232,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
           file.status = "error"
           file.error = errorMessage
         }
-        return { ...prev, files: newFiles }
+        return { ...prev, isDownloading: false, files: newFiles }
       })
     }
   }, [state.files])
@@ -244,6 +247,9 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
 
     if (successFiles.length === 0) return
 
+    // Activer isDownloading
+    setState((prev) => ({ ...prev, isDownloading: true }))
+
     try {
       // Récupérer tous les blobs
       const fileBlobs = await Promise.all(
@@ -256,7 +262,12 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
       // Créer et télécharger le ZIP
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5)
       await createAndDownloadZip(fileBlobs, `conversions-${timestamp}.zip`)
+
+      // Désactiver isDownloading
+      setState((prev) => ({ ...prev, isDownloading: false }))
     } catch (error) {
+      // Désactiver isDownloading en cas d'erreur
+      setState((prev) => ({ ...prev, isDownloading: false }))
       console.error("Erreur lors du téléchargement groupé:", error)
       throw error
     }
@@ -289,6 +300,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
   const resetConversion = useCallback(() => {
     setState({
       isConverting: false,
+      isDownloading: false,
       files: new Map(),
       completedCount: 0,
       errorCount: 0,
