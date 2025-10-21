@@ -255,7 +255,7 @@ export default function FileUpload({
           onDrop={isDisabled ? undefined : handleDrop}
           data-dragging={isDragging || undefined}
           data-disabled={isDisabled || undefined}
-          className={`flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-input p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 ${
+          className={`flex min-h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-4 transition-all has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50 dark:border-gray-700 ${
             isDisabled
               ? "cursor-not-allowed bg-muted/30"
               : "hover:bg-accent/50 cursor-pointer"
