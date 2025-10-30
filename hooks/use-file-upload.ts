@@ -236,7 +236,7 @@ export const useFileUpload = (
             file,
             id: generateUniqueId(file),
             preview: createPreview(file),
-            tauxDouane: 563.53, // Taux par défaut USD/XOF
+            tauxDouane: 572.021, // Taux par défaut USD/XOF
           })
         }
       })

@@ -227,7 +227,7 @@ export default function FileUpload({
   })
 
   // Bulk application state
-  const [bulkTaux, setBulkTaux] = useState<number>(563.53)
+  const [bulkTaux, setBulkTaux] = useState<number>(572.021)
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
   const [individualInputsVisible, setIndividualInputsVisible] = useState<boolean>(true)
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false)
@@ -245,7 +245,7 @@ export default function FileUpload({
   // Check if any files would be replaced
   const checkNeedsConfirmation = (targetFiles: FileWithPreview[]): boolean => {
     return targetFiles.some(
-      (file) => file.tauxDouane && file.tauxDouane !== 563.53
+      (file) => file.tauxDouane && file.tauxDouane !== 572.021
     )
   }
 
@@ -458,8 +458,8 @@ export default function FileUpload({
                     id={`taux-${file.id}`}
                     type="number"
                     min="0"
-                    step="0.01"
-                    value={file.tauxDouane || 563.53}
+                    step="0.001"
+                    value={file.tauxDouane || 572.021}
                     onChange={(e) => {
                       const value = parseFloat(e.target.value)
                       if (!isNaN(value) && onFileTauxChange) {
@@ -468,7 +468,7 @@ export default function FileUpload({
                     }}
                     disabled={disabled || isProcessing}
                     className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Ex: 563.53"
+                    placeholder="Ex: 572.021"
                   />
                   <span className="text-xs text-muted-foreground">
                     (ex: USD/XOF)
@@ -521,12 +521,12 @@ export default function FileUpload({
                   id="bulk-taux"
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="0.001"
                   value={bulkTaux}
                   onChange={(e) => setBulkTaux(parseFloat(e.target.value))}
                   disabled={disabled || isProcessing}
                   className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Ex: 563.53"
+                  placeholder="Ex: 572.021"
                 />
                 <Button
                   type="button"

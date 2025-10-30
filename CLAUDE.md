@@ -8,7 +8,7 @@ Next.js web application for converting PDF files to XML format for ASYCUDA (Auto
 
 **API Version**: v1.4.10 (requires exchange rate for all conversions)
 
-**Exchange Rate System**: Each PDF file can have a different exchange rate (e.g., 563.53 for USD/XOF) since files may contain information in different currencies.
+**Exchange Rate System**: Each PDF file can have a different exchange rate (e.g., 572.021 for USD/XOF) since files may contain information in different currencies.
 
 ## Development Commands
 
@@ -56,8 +56,8 @@ API_KEY=<your-api-key>
 5. **Download**: On completion, client retrieves XML via `/api/jobs/[jobId]/download`
 
 **Exchange Rate System**:
-- Each file has its own `tauxDouane` field (number > 0) - e.g., 563.53 for USD/XOF
-- Default value: 563.53 (USD/XOF)
+- Each file has its own `tauxDouane` field (number > 0) - e.g., 572.021 for USD/XOF
+- Default value: 572.021 (USD/XOF)
 - User can modify the rate for each file before conversion
 - Files are converted sequentially, each with their specific rate
 
