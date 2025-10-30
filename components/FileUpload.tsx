@@ -479,7 +479,7 @@ export default function FileUpload({
           ))}
 
           {/* Application groupée du taux de change */}
-          {files.some((f) => !f.status || f.status === "idle") && (
+          {files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
               {/* Header avec toggle pour inputs individuels */}
               <div className="flex items-center justify-between">
