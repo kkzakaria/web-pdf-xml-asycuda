@@ -52,6 +52,8 @@ export type FileUploadActions = {
   clearFiles: () => void
   clearErrors: () => void
   updateFileTaux: (id: string, taux: number) => void // Mettre à jour le taux d'un fichier
+  applyTauxToAll: (taux: number) => void // Appliquer le taux à tous les fichiers
+  applyTauxToFiles: (fileIds: string[], taux: number) => void // Appliquer le taux aux fichiers sélectionnés
   handleDragEnter: (e: DragEvent<HTMLElement>) => void
   handleDragLeave: (e: DragEvent<HTMLElement>) => void
   handleDragOver: (e: DragEvent<HTMLElement>) => void
@@ -324,6 +326,41 @@ export const useFileUpload = (
     [onFilesChange]
   )
 
+  const applyTauxToAll = useCallback(
+    (taux: number) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) => ({
+          ...file,
+          tauxDouane: taux,
+        }))
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
+  const applyTauxToFiles = useCallback(
+    (fileIds: string[], taux: number) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) =>
+          fileIds.includes(file.id) ? { ...file, tauxDouane: taux } : file
+        )
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
   const clearErrors = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -414,6 +451,8 @@ export const useFileUpload = (
       clearFiles,
       clearErrors,
       updateFileTaux,
+      applyTauxToAll,
+      applyTauxToFiles,
       handleDragEnter,
       handleDragLeave,
       handleDragOver,

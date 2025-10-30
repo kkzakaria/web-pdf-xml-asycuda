@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   AlertCircleIcon,
   DownloadIcon,
@@ -13,6 +14,8 @@ import {
   VideoIcon,
   XIcon,
   RefreshCwIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "lucide-react"
 
 import {
@@ -210,6 +213,8 @@ export default function FileUpload({
       removeFile,
       clearFiles: clearInternalFiles,
       getInputProps,
+      applyTauxToAll,
+      applyTauxToFiles,
     },
   ] = useFileUpload({
     multiple,
@@ -221,6 +226,13 @@ export default function FileUpload({
     onFilesAdded,
   })
 
+  // Bulk application state
+  const [bulkTaux, setBulkTaux] = useState<number>(563.53)
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
+  const [individualInputsVisible, setIndividualInputsVisible] = useState<boolean>(true)
+  const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false)
+  const [confirmAction, setConfirmAction] = useState<() => void>(() => {})
+
   // Use controlled files if provided, otherwise use internal state
   const files = controlledFiles ?? internalFiles
 
@@ -228,6 +240,62 @@ export default function FileUpload({
   const clearFiles = () => {
     clearInternalFiles()
     onClearFiles?.()
+  }
+
+  // Check if any files would be replaced
+  const checkNeedsConfirmation = (targetFiles: FileWithPreview[]): boolean => {
+    return targetFiles.some(
+      (file) => file.tauxDouane && file.tauxDouane !== 563.53
+    )
+  }
+
+  // Handle applying taux to all files
+  const handleApplyToAll = () => {
+    const idleFiles = files.filter((f) => !f.status || f.status === "idle")
+    if (idleFiles.length === 0) return
+
+    const needsConfirm = checkNeedsConfirmation(idleFiles)
+    if (needsConfirm) {
+      setConfirmAction(() => () => {
+        applyTauxToAll(bulkTaux)
+        setShowConfirmDialog(false)
+      })
+      setShowConfirmDialog(true)
+    } else {
+      applyTauxToAll(bulkTaux)
+    }
+  }
+
+  // Handle applying taux to selected files
+  const handleApplyToSelected = () => {
+    const selectedFiles = files.filter((f) => selectedFileIds.has(f.id))
+    if (selectedFiles.length === 0) return
+
+    const needsConfirm = checkNeedsConfirmation(selectedFiles)
+    if (needsConfirm) {
+      setConfirmAction(() => () => {
+        applyTauxToFiles(Array.from(selectedFileIds), bulkTaux)
+        setSelectedFileIds(new Set())
+        setShowConfirmDialog(false)
+      })
+      setShowConfirmDialog(true)
+    } else {
+      applyTauxToFiles(Array.from(selectedFileIds), bulkTaux)
+      setSelectedFileIds(new Set())
+    }
+  }
+
+  // Handle checkbox toggle
+  const handleCheckboxToggle = (fileId: string) => {
+    setSelectedFileIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(fileId)) {
+        next.delete(fileId)
+      } else {
+        next.add(fileId)
+      }
+      return next
+    })
   }
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
@@ -334,6 +402,17 @@ export default function FileUpload({
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3 overflow-hidden">
+                  {/* Checkbox pour sélection groupée */}
+                  {(!file.status || file.status === "idle") && (
+                    <input
+                      type="checkbox"
+                      checked={selectedFileIds.has(file.id)}
+                      onChange={() => handleCheckboxToggle(file.id)}
+                      disabled={disabled || isProcessing}
+                      className="size-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      aria-label={`Sélectionner ${file.file instanceof File ? file.file.name : file.file.name}`}
+                    />
+                  )}
                   <div className="flex aspect-square size-10 shrink-0 items-center justify-center rounded border">
                     {getFileIcon(file)}
                   </div>
@@ -365,8 +444,9 @@ export default function FileUpload({
                 )}
               </div>
 
-              {/* Input pour le taux de change */}
-              {!file.status || file.status === "idle" ? (
+              {/* Input pour le taux de change (collapsible) */}
+              {individualInputsVisible &&
+              (!file.status || file.status === "idle") ? (
                 <div className="mt-2 flex items-center gap-2">
                   <label
                     htmlFor={`taux-${file.id}`}
@@ -398,6 +478,99 @@ export default function FileUpload({
             </div>
           ))}
 
+          {/* Application groupée du taux de change */}
+          {files.some((f) => !f.status || f.status === "idle") && (
+            <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+              {/* Header avec toggle pour inputs individuels */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-foreground">
+                  Application groupée du taux
+                </h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    setIndividualInputsVisible(!individualInputsVisible)
+                  }
+                  className="text-xs"
+                >
+                  {individualInputsVisible ? (
+                    <>
+                      <ChevronUpIcon className="size-3 mr-1" />
+                      Masquer les inputs individuels
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDownIcon className="size-3 mr-1" />
+                      Afficher les inputs individuels
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Input global et bouton "Appliquer à tous" */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="bulk-taux"
+                  className="text-xs text-muted-foreground whitespace-nowrap"
+                >
+                  Taux global:
+                </label>
+                <input
+                  id="bulk-taux"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={bulkTaux}
+                  onChange={(e) => setBulkTaux(parseFloat(e.target.value))}
+                  disabled={disabled || isProcessing}
+                  className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Ex: 563.53"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleApplyToAll}
+                  disabled={
+                    disabled ||
+                    isProcessing ||
+                    !bulkTaux ||
+                    isNaN(bulkTaux) ||
+                    bulkTaux <= 0
+                  }
+                  className="whitespace-nowrap"
+                >
+                  Appliquer à tous
+                </Button>
+              </div>
+
+              {/* Bouton "Appliquer à la sélection" */}
+              {selectedFileIds.size > 0 && (
+                <div className="flex items-center justify-between pt-2 border-t border-primary/20">
+                  <span className="text-xs text-muted-foreground">
+                    {selectedFileIds.size} fichier
+                    {selectedFileIds.size > 1 ? "s" : ""} sélectionné
+                    {selectedFileIds.size > 1 ? "s" : ""}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleApplyToSelected}
+                    disabled={
+                      disabled ||
+                      isProcessing ||
+                      !bulkTaux ||
+                      isNaN(bulkTaux) ||
+                      bulkTaux <= 0
+                    }
+                    className="border-primary text-primary hover:bg-primary/10"
+                  >
+                    Appliquer à la sélection
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Bouton pour supprimer tous les fichiers */}
           {showClearAllButton && files.length > 1 && (
             <div>
@@ -411,6 +584,38 @@ export default function FileUpload({
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowConfirmDialog(false)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-lg bg-background p-6 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold">Confirmation</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Certains fichiers ont déjà un taux de change personnalisé.
+                  Voulez-vous les remplacer par le nouveau taux ?
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowConfirmDialog(false)}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={confirmAction}>Confirmer</Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
