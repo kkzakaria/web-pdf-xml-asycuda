@@ -487,6 +487,7 @@ export default function FileUpload({
                   Application groupée du taux
                 </h3>
                 <Button
+                  type="button"
                   size="sm"
                   variant="ghost"
                   onClick={() =>
@@ -528,6 +529,7 @@ export default function FileUpload({
                   placeholder="Ex: 563.53"
                 />
                 <Button
+                  type="button"
                   size="sm"
                   onClick={handleApplyToAll}
                   disabled={
@@ -552,6 +554,7 @@ export default function FileUpload({
                     {selectedFileIds.size > 1 ? "s" : ""}
                   </span>
                   <Button
+                    type="button"
                     size="sm"
                     variant="outline"
                     onClick={handleApplyToSelected}
@@ -575,6 +578,7 @@ export default function FileUpload({
           {showClearAllButton && files.length > 1 && (
             <div>
               <Button
+                type="button"
                 size="sm"
                 variant="outline"
                 onClick={clearFiles}
@@ -607,12 +611,13 @@ export default function FileUpload({
               </div>
               <div className="flex justify-end gap-2">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => setShowConfirmDialog(false)}
                 >
                   Annuler
                 </Button>
-                <Button onClick={confirmAction}>Confirmer</Button>
+                <Button type="button" onClick={confirmAction}>Confirmer</Button>
               </div>
             </div>
           </div>
