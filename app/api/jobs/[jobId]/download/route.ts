@@ -26,7 +26,7 @@ export async function GET(
       )
     }
 
-    // Appeler l'API externe avec authentification
+    // Appeler l'API externe avec authentification (v1.4.10)
     const response = await fetch(`${apiBaseUrl}/convert/${jobId}/download`, {
       method: "GET",
       headers: {

@@ -27,6 +27,7 @@ export type FileWithPreview = {
   status?: FileStatus
   errorMessage?: string
   outputFileName?: string // Nom du fichier converti (ex: fichier.xml)
+  tauxDouane?: number // Taux de change (ex: 563.53 pour USD/XOF)
 }
 
 export type FileUploadOptions = {
@@ -50,6 +51,7 @@ export type FileUploadActions = {
   removeFile: (id: string) => void
   clearFiles: () => void
   clearErrors: () => void
+  updateFileTaux: (id: string, taux: number) => void // Mettre à jour le taux d'un fichier
   handleDragEnter: (e: DragEvent<HTMLElement>) => void
   handleDragLeave: (e: DragEvent<HTMLElement>) => void
   handleDragOver: (e: DragEvent<HTMLElement>) => void
@@ -232,6 +234,7 @@ export const useFileUpload = (
             file,
             id: generateUniqueId(file),
             preview: createPreview(file),
+            tauxDouane: 563.53, // Taux par défaut USD/XOF
           })
         }
       })
@@ -298,6 +301,23 @@ export const useFileUpload = (
           ...prev,
           files: newFiles,
           errors: [],
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
+  const updateFileTaux = useCallback(
+    (id: string, taux: number) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) =>
+          file.id === id ? { ...file, tauxDouane: taux } : file
+        )
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
         }
       })
     },
@@ -393,6 +413,7 @@ export const useFileUpload = (
       removeFile,
       clearFiles,
       clearErrors,
+      updateFileTaux,
       handleDragEnter,
       handleDragLeave,
       handleDragOver,

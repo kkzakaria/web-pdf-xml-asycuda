@@ -4,9 +4,11 @@ import { FileConversionAnimation } from "@/components/FileConversionAnimation"
 import { SuccessAnimation } from "@/components/SuccessAnimation"
 import { WarningAnimation } from "@/components/WarningAnimation"
 import { ErrorAnimation } from "@/components/ErrorAnimation"
+import { Spinner } from "@/components/ui/spinner"
 
 interface ProcessingStatesOverlayProps {
   isProcessing?: boolean
+  isDownloading?: boolean
   isSuccess?: boolean
   isWarning?: boolean
   warningMessage?: string
@@ -19,6 +21,7 @@ interface ProcessingStatesOverlayProps {
 
 export function ProcessingStatesOverlay({
   isProcessing = false,
+  isDownloading = false,
   isSuccess = false,
   isWarning = false,
   warningMessage,
@@ -29,7 +32,7 @@ export function ProcessingStatesOverlay({
   filesCount = 0,
 }: ProcessingStatesOverlayProps) {
   // Ne rien afficher si aucun état actif
-  if (!isProcessing && !isSuccess && !isWarning && !isError) {
+  if (!isProcessing && !isDownloading && !isSuccess && !isWarning && !isError) {
     return null
   }
 
@@ -45,6 +48,16 @@ export function ProcessingStatesOverlay({
           message={warningMessage}
           description={warningDescription}
         />
+      ) : isDownloading ? (
+        <div className="flex flex-col items-center justify-center gap-3">
+          <Spinner className="size-8 text-blue-600" />
+          <div className="text-center">
+            <p className="text-sm font-medium">Téléchargement en cours...</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Préparation de vos fichiers
+            </p>
+          </div>
+        </div>
       ) : isSuccess ? (
         <SuccessAnimation
           message="Conversion réussie !"

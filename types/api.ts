@@ -4,13 +4,21 @@
  */
 
 /**
- * Métriques de conversion
+ * Métriques de conversion (enrichies selon OpenAPI v1.4.10)
  */
 export type ConversionMetrics = {
-  articles_count: number
+  items_count: number
+  containers_count: number
+  fill_rate: number // Taux de remplissage en %
+  warnings_count: number
+  warnings: string[]
+  xml_valid: boolean
+  has_exporter: boolean
+  has_consignee: boolean
+  processing_time: number // En secondes
   total_weight?: number
   total_value?: number
-  [key: string]: number | string | undefined
+  [key: string]: number | string | boolean | string[] | undefined
 }
 
 /**

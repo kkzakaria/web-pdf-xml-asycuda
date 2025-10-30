@@ -32,6 +32,7 @@ type FileUploadProps = FileUploadOptions & {
   showClearAllButton?: boolean
   disabled?: boolean
   isProcessing?: boolean
+  isDownloading?: boolean
   isSuccess?: boolean
   isWarning?: boolean
   warningMessage?: string
@@ -41,6 +42,7 @@ type FileUploadProps = FileUploadOptions & {
   errorDescription?: string
   onFileDownload?: (fileId: string) => void
   onFileRetry?: (fileId: string) => void
+  onFileTauxChange?: (fileId: string, taux: number) => void
   controlledFiles?: FileWithPreview[]
   onClearFiles?: () => void
 }
@@ -183,6 +185,7 @@ export default function FileUpload({
   onFilesAdded,
   disabled = false,
   isProcessing = false,
+  isDownloading = false,
   isSuccess = false,
   isWarning = false,
   warningMessage,
@@ -192,6 +195,7 @@ export default function FileUpload({
   errorDescription,
   onFileDownload,
   onFileRetry,
+  onFileTauxChange,
   controlledFiles,
   onClearFiles,
 }: FileUploadProps) {
@@ -228,7 +232,7 @@ export default function FileUpload({
 
   const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
-  const hasActiveState = isProcessing || isSuccess || isWarning || isError
+  const hasActiveState = isProcessing || isDownloading || isSuccess || isWarning || isError
 
   return (
     <div className={`flex flex-col gap-2 ${className || ""}`}>
@@ -236,6 +240,7 @@ export default function FileUpload({
       {hasActiveState ? (
         <ProcessingStatesOverlay
           isProcessing={isProcessing}
+          isDownloading={isDownloading}
           isSuccess={isSuccess}
           isWarning={isWarning}
           warningMessage={warningMessage}
@@ -325,38 +330,71 @@ export default function FileUpload({
           {files.map((file) => (
             <div
               key={file.id}
-              className="flex items-center justify-between gap-2 rounded-lg border bg-background p-2 pe-3"
+              className="rounded-lg border bg-background p-2 pe-3"
             >
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div className="flex aspect-square size-10 shrink-0 items-center justify-center rounded border">
-                  {getFileIcon(file)}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="flex aspect-square size-10 shrink-0 items-center justify-center rounded border">
+                    {getFileIcon(file)}
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <p className="truncate text-[13px] font-medium">
+                      {file.status === "success" && file.outputFileName
+                        ? file.outputFileName
+                        : file.file instanceof File
+                          ? file.file.name
+                          : file.file.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatBytes(
+                        file.file instanceof File
+                          ? file.file.size
+                          : file.file.size
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <p className="truncate text-[13px] font-medium">
-                    {file.status === "success" && file.outputFileName
-                      ? file.outputFileName
-                      : file.file instanceof File
-                        ? file.file.name
-                        : file.file.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatBytes(
-                      file.file instanceof File
-                        ? file.file.size
-                        : file.file.size
-                    )}
-                  </p>
-                </div>
+
+                {getFileActionIcon(
+                  file.status,
+                  disabled,
+                  () => removeFile(file.id),
+                  file.errorMessage,
+                  onFileDownload ? () => onFileDownload(file.id) : undefined,
+                  onFileRetry ? () => onFileRetry(file.id) : undefined
+                )}
               </div>
 
-              {getFileActionIcon(
-                file.status,
-                disabled,
-                () => removeFile(file.id),
-                file.errorMessage,
-                onFileDownload ? () => onFileDownload(file.id) : undefined,
-                onFileRetry ? () => onFileRetry(file.id) : undefined
-              )}
+              {/* Input pour le taux de change */}
+              {!file.status || file.status === "idle" ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <label
+                    htmlFor={`taux-${file.id}`}
+                    className="text-xs text-muted-foreground whitespace-nowrap"
+                  >
+                    Taux de change:
+                  </label>
+                  <input
+                    id={`taux-${file.id}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={file.tauxDouane || 563.53}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value)
+                      if (!isNaN(value) && onFileTauxChange) {
+                        onFileTauxChange(file.id, value)
+                      }
+                    }}
+                    disabled={disabled || isProcessing}
+                    className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Ex: 563.53"
+                  />
+                  <span className="text-xs text-muted-foreground">
+                    (ex: USD/XOF)
+                  </span>
+                </div>
+              ) : null}
             </div>
           ))}
 
