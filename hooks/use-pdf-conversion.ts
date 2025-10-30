@@ -35,6 +35,17 @@ export type ConversionState = {
 }
 
 /**
+ * État interne (privé) de la conversion avec nom technique
+ */
+type InternalConversionState = {
+  _isConvertingActive: boolean
+  isDownloading: boolean
+  files: Map<string, FileConversionState>
+  completedCount: number
+  errorCount: number
+}
+
+/**
  * Actions disponibles pour la conversion
  */
 export type ConversionActions = {
@@ -50,8 +61,8 @@ export type ConversionActions = {
  * Hook pour gérer la conversion de fichiers PDF vers XML ASYCUDA
  */
 export function usePdfConversion(): [ConversionState, ConversionActions] {
-  const [state, setState] = useState<ConversionState>({
-    isConverting: false,
+  const [state, setState] = useState<InternalConversionState>({
+    _isConvertingActive: false,
     isDownloading: false,
     files: new Map(),
     completedCount: 0,
@@ -63,7 +74,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
 
   /**
    * Convertit une liste de fichiers (SANS téléchargement automatique)
-   * @param files - Fichiers à convertir
+   * @param files - Fichiers à convertir (chaque fichier doit avoir son tauxDouane)
    * @param isRetry - Si true, conserve les fichiers existants non concernés
    */
   const convertFiles = useCallback(async (files: FileWithPreview[], isRetry = false) => {
@@ -93,13 +104,13 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
         })
         return {
           ...prev,
-          isConverting: true,
+          _isConvertingActive: true,
           files: mergedFiles,
         }
       } else {
         // Mode normal : réinitialiser complètement
         return {
-          isConverting: true,
+          _isConvertingActive: true,
           isDownloading: false,
           files: newFileStates,
           completedCount: 0,
@@ -146,8 +157,14 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
             })
           }
 
+          // Récupérer le taux de change du fichier
+          const tauxDouane = fileWithPreview.tauxDouane
+          if (!tauxDouane || tauxDouane <= 0) {
+            throw new Error("Taux de change manquant ou invalide")
+          }
+
           // Convertir (SANS télécharger)
-          const jobId = await convertPdfFile(file, onProgress)
+          const jobId = await convertPdfFile(file, tauxDouane, onProgress)
 
           // Marquer comme succès
           setState((prev) => {
@@ -209,14 +226,14 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
         })
         return {
           ...prev,
-          isConverting: false,
+          _isConvertingActive: false,
           completedCount,
           errorCount,
         }
       } else {
         return {
           ...prev,
-          isConverting: false,
+          _isConvertingActive: false,
         }
       }
     })
@@ -330,7 +347,7 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
    */
   const resetConversion = useCallback(() => {
     setState({
-      isConverting: false,
+      _isConvertingActive: false,
       isDownloading: false,
       files: new Map(),
       completedCount: 0,
@@ -349,7 +366,13 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
   )
 
   return [
-    state,
+    {
+      isConverting: state._isConvertingActive,
+      isDownloading: state.isDownloading,
+      files: state.files,
+      completedCount: state.completedCount,
+      errorCount: state.errorCount,
+    },
     {
       convertFiles,
       downloadFile,
@@ -358,5 +381,5 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
       resetConversion,
       getFileStatus,
     },
-  ]
+  ] as const
 }

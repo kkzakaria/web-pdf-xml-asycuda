@@ -61,13 +61,16 @@ function createTimeoutController(timeout: number): AbortController {
 /**
  * Démarre une conversion PDF en XML ASYCUDA (asynchrone)
  * @param file - Fichier PDF à convertir
+ * @param tauxDouane - Taux de douane (obligatoire, > 0)
  * @returns Informations sur le job créé
  */
 export async function convertPdfAsync(
-  file: File
+  file: File,
+  tauxDouane: number
 ): Promise<ConvertAsyncResponse> {
   const formData = new FormData()
   formData.append("file", file)
+  formData.append("taux_douane", tauxDouane.toString())
 
   const response = await fetch(API_CONFIG.endpoints.convertAsync, {
     method: "POST",
@@ -140,16 +143,18 @@ export function downloadXmlFile(blob: Blob, filename: string): void {
  * Convertit un fichier PDF en XML ASYCUDA (SANS téléchargement automatique)
  * Gère le processus de conversion avec polling du statut
  * @param file - Fichier PDF à convertir
+ * @param tauxDouane - Taux de douane (obligatoire, > 0)
  * @param onProgress - Callback pour suivre la progression
  * @returns ID du job de conversion
  */
 export async function convertPdfFile(
   file: File,
+  tauxDouane: number,
   onProgress?: (status: string, progress: number) => void
 ): Promise<string> {
   // Démarrer la conversion asynchrone
   onProgress?.("Envoi du fichier...", 10)
-  const asyncResponse = await convertPdfAsync(file)
+  const asyncResponse = await convertPdfAsync(file, tauxDouane)
   const jobId = asyncResponse.job_id
 
   // Polling du statut jusqu'à completion

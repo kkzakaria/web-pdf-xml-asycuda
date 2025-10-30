@@ -42,6 +42,14 @@ export default function Home() {
     setErrorMessage("")
   }, [])
 
+  const handleFileTauxChange = useCallback((fileId: string, taux: number) => {
+    setFiles((prevFiles) =>
+      prevFiles.map((file) =>
+        file.id === fileId ? { ...file, tauxDouane: taux } : file
+      )
+    )
+  }, [])
+
   // Mettre à jour les statuts des fichiers en fonction de la conversion
   useEffect(() => {
     if (conversionState.files.size === 0) return
@@ -92,11 +100,24 @@ export default function Home() {
       return
     }
 
+    // Valider que chaque fichier a un taux de change valide
+    const filesWithoutTaux = files.filter(
+      (file) => !file.tauxDouane || file.tauxDouane <= 0
+    )
+    if (filesWithoutTaux.length > 0) {
+      setIsError(true)
+      setErrorMessage(
+        `Veuillez saisir un taux de change valide pour ${filesWithoutTaux.length > 1 ? "tous les fichiers" : "le fichier"}`
+      )
+      return
+    }
+
     setIsSuccess(false)
     setIsError(false)
     setErrorMessage("")
 
     try {
+      // Convertir chaque fichier avec son propre taux
       await convertFiles(files)
     } catch (error) {
       console.error("Erreur lors de la conversion:", error)
@@ -123,6 +144,13 @@ export default function Home() {
       const fileToRetry = files.find((f) => f.id === fileId)
       if (!fileToRetry) return
 
+      // Valider que le fichier a un taux valide
+      if (!fileToRetry.tauxDouane || fileToRetry.tauxDouane <= 0) {
+        setIsError(true)
+        setErrorMessage("Veuillez saisir un taux de change valide pour ce fichier")
+        return
+      }
+
       try {
         await retryFailedFiles([fileToRetry])
       } catch (error) {
@@ -143,6 +171,17 @@ export default function Home() {
   }, [downloadAllFiles])
 
   const handleRetryFailed = useCallback(async () => {
+    // Valider que tous les fichiers en erreur ont un taux valide
+    const failedFiles = files.filter((f) => f.status === "error")
+    const filesWithoutTaux = failedFiles.filter(
+      (file) => !file.tauxDouane || file.tauxDouane <= 0
+    )
+    if (filesWithoutTaux.length > 0) {
+      setIsError(true)
+      setErrorMessage("Veuillez saisir un taux de change valide pour tous les fichiers")
+      return
+    }
+
     try {
       await retryFailedFiles(files)
     } catch (error) {
@@ -179,6 +218,9 @@ export default function Home() {
             <p className="text-muted-foreground">
               Téléversez jusqu&apos;à 5 fichiers PDF de 2MB maximum chacun
             </p>
+            <p className="text-xs text-muted-foreground">
+              Vous pourrez définir un taux de change spécifique pour chaque fichier
+            </p>
           </div>
 
           <FileUpload
@@ -191,6 +233,7 @@ export default function Home() {
             onClearFiles={handleClearFiles}
             disabled={conversionState.isConverting || conversionState.isDownloading}
             isProcessing={conversionState.isConverting}
+            isDownloading={conversionState.isDownloading}
             isSuccess={isSuccess}
             isError={isError}
             errorMessage={errorMessage}
@@ -202,6 +245,7 @@ export default function Home() {
             controlledFiles={files}
             onFileDownload={handleFileDownload}
             onFileRetry={handleFileRetry}
+            onFileTauxChange={handleFileTauxChange}
           />
 
           {files.length > 0 && !showActionButtons && (
