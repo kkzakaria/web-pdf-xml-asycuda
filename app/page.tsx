@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import FileUpload from "@/components/FileUpload"
 import { SubmitButton } from "@/components/SubmitButton"
 import { Logo } from "@/components/Logo"
@@ -13,6 +13,7 @@ export default function Home() {
   const [isError, setIsError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [fileUploadKey, setFileUploadKey] = useState(0)
+  const submitButtonRef = useRef<HTMLDivElement>(null)
 
   const [
     conversionState,
@@ -90,6 +91,19 @@ export default function Home() {
       }
     }
   }, [conversionState])
+
+  // Scroll automatique vers le bouton de conversion quand des fichiers sont ajoutés
+  useEffect(() => {
+    if (files.length > 0 && submitButtonRef.current && !conversionState.isConverting) {
+      // Petit délai pour laisser le DOM se mettre à jour
+      setTimeout(() => {
+        submitButtonRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        })
+      }, 100)
+    }
+  }, [files.length, conversionState.isConverting])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -249,14 +263,16 @@ export default function Home() {
           />
 
           {files.length > 0 && !showActionButtons && (
-            <SubmitButton
-              isSubmitting={conversionState.isConverting}
-              submittingText="Conversion en cours..."
-              className="w-full"
-              disabled={conversionState.isConverting}
-            >
-              Convertir en XML ASYCUDA
-            </SubmitButton>
+            <div ref={submitButtonRef}>
+              <SubmitButton
+                isSubmitting={conversionState.isConverting}
+                submittingText="Conversion en cours..."
+                className="w-full"
+                disabled={conversionState.isConverting}
+              >
+                Convertir en XML ASYCUDA
+              </SubmitButton>
+            </div>
           )}
 
           {/* Boutons d'action après conversion */}
