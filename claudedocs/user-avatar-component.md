@@ -46,19 +46,35 @@ Le menu déroulant s'ouvre au clic sur l'avatar et contient:
 
 ### Visibilité
 
-- ✅ **Utilisateur connecté**: Avatar visible
+- ✅ **Utilisateur connecté**: Avatar visible (sauf sur /login)
 - ❌ **Utilisateur non connecté**: Avatar caché
+- ❌ **Page de connexion**: Avatar toujours caché (même si connecté)
 - ⏳ **Chargement**: Avatar caché pendant la vérification
 
 ### Réactivité
 
-Le composant écoute les changements d'état d'authentification en temps réel:
+Le composant écoute les changements d'état d'authentification en temps réel et se synchronise automatiquement:
 
 ```typescript
+// Écoute des changements d'authentification
 supabase.auth.onAuthStateChange((_event, session) => {
   setUser(session?.user ?? null)
 })
+
+// Synchronisation lors des changements de route
+useEffect(() => {
+  fetchUser()
+}, [pathname])
+
+// Synchronisation lorsque la fenêtre regagne le focus
+window.addEventListener("focus", fetchUser)
 ```
+
+**Stratégies de synchronisation**:
+- **Auth state listener**: Détecte les connexions/déconnexions en temps réel
+- **Route change**: Rafraîchit l'utilisateur lors des navigations
+- **Window focus**: Rafraîchit l'utilisateur lorsque l'onglet regagne le focus
+- **Page de connexion**: Masquage explicite sur `/login` pour éviter l'affichage post-logout
 
 ### Déconnexion
 
