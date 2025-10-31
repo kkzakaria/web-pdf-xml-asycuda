@@ -7,6 +7,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/browser"
 import { logout } from "@/app/login/actions"
 import type { User } from "@supabase/supabase-js"
@@ -24,24 +25,45 @@ import { LogOut, User as UserIcon } from "lucide-react"
 export function UserAvatar() {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const pathname = usePathname()
   const supabase = createClient()
+
+  // Fonction pour récupérer l'utilisateur
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    setUser(user)
+    setIsLoading(false)
+  }
 
   useEffect(() => {
     // Récupérer l'utilisateur au chargement
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-      setIsLoading(false)
-    })
+    fetchUser()
 
     // Écouter les changements d'authentification
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      setIsLoading(false)
     })
 
-    return () => subscription.unsubscribe()
+    // Rafraîchir l'utilisateur quand la fenêtre regagne le focus
+    const handleFocus = () => {
+      fetchUser()
+    }
+
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener("focus", handleFocus)
+    }
   }, [supabase.auth])
+
+  // Rafraîchir l'utilisateur quand la route change
+  useEffect(() => {
+    fetchUser()
+  }, [pathname])
 
   const handleLogout = async () => {
     await logout()
@@ -59,6 +81,11 @@ export function UserAvatar() {
   }
 
   if (isLoading || !user) {
+    return null
+  }
+
+  // Masquer l'avatar sur la page de connexion
+  if (pathname === '/login') {
     return null
   }
 
