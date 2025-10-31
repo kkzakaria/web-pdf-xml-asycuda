@@ -163,8 +163,14 @@ export function usePdfConversion(): [ConversionState, ConversionActions] {
             throw new Error("Taux de change manquant ou invalide")
           }
 
+          // Récupérer le rapport de paiement du fichier
+          const rapportPaiement = fileWithPreview.rapportPaiement
+          if (!rapportPaiement) {
+            throw new Error("Rapport de paiement manquant (KARTA ou DJAM requis)")
+          }
+
           // Convertir (SANS télécharger)
-          const jobId = await convertPdfFile(file, tauxDouane, onProgress)
+          const jobId = await convertPdfFile(file, tauxDouane, rapportPaiement, onProgress)
 
           // Marquer comme succès
           setState((prev) => {

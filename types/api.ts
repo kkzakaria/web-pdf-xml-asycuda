@@ -4,6 +4,12 @@
  */
 
 /**
+ * Types de rapport de paiement disponibles
+ * Labels UI uniquement - les valeurs réelles sont mappées côté serveur
+ */
+export type RapportType = "KARTA" | "DJAM"
+
+/**
  * Métriques de conversion (enrichies selon OpenAPI v1.4.10)
  */
 export type ConversionMetrics = {

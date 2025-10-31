@@ -9,6 +9,7 @@ import {
   type InputHTMLAttributes,
   type Ref,
 } from "react"
+import type { RapportType } from "@/types/api"
 
 export type FileMetadata = {
   name: string
@@ -28,6 +29,7 @@ export type FileWithPreview = {
   errorMessage?: string
   outputFileName?: string // Nom du fichier converti (ex: fichier.xml)
   tauxDouane?: number // Taux de change (ex: 563.53 pour USD/XOF)
+  rapportPaiement?: RapportType // Type de rapport de paiement (KARTA ou DJAM)
 }
 
 export type FileUploadOptions = {
@@ -54,6 +56,9 @@ export type FileUploadActions = {
   updateFileTaux: (id: string, taux: number) => void // Mettre à jour le taux d'un fichier
   applyTauxToAll: (taux: number) => void // Appliquer le taux à tous les fichiers
   applyTauxToFiles: (fileIds: string[], taux: number) => void // Appliquer le taux aux fichiers sélectionnés
+  updateFileRapport: (id: string, rapport: RapportType) => void // Mettre à jour le rapport d'un fichier
+  applyRapportToAll: (rapport: RapportType) => void // Appliquer le rapport à tous les fichiers
+  applyRapportToFiles: (fileIds: string[], rapport: RapportType) => void // Appliquer le rapport aux fichiers sélectionnés
   handleDragEnter: (e: DragEvent<HTMLElement>) => void
   handleDragLeave: (e: DragEvent<HTMLElement>) => void
   handleDragOver: (e: DragEvent<HTMLElement>) => void
@@ -361,6 +366,58 @@ export const useFileUpload = (
     [onFilesChange]
   )
 
+  const updateFileRapport = useCallback(
+    (id: string, rapport: RapportType) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) =>
+          file.id === id ? { ...file, rapportPaiement: rapport } : file
+        )
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
+  const applyRapportToAll = useCallback(
+    (rapport: RapportType) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) => ({
+          ...file,
+          rapportPaiement: rapport,
+        }))
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
+  const applyRapportToFiles = useCallback(
+    (fileIds: string[], rapport: RapportType) => {
+      setState((prev) => {
+        const newFiles = prev.files.map((file) =>
+          fileIds.includes(file.id) ? { ...file, rapportPaiement: rapport } : file
+        )
+        onFilesChange?.(newFiles)
+
+        return {
+          ...prev,
+          files: newFiles,
+        }
+      })
+    },
+    [onFilesChange]
+  )
+
   const clearErrors = useCallback(() => {
     setState((prev) => ({
       ...prev,
@@ -453,6 +510,9 @@ export const useFileUpload = (
       updateFileTaux,
       applyTauxToAll,
       applyTauxToFiles,
+      updateFileRapport,
+      applyRapportToAll,
+      applyRapportToFiles,
       handleDragEnter,
       handleDragLeave,
       handleDragOver,

@@ -51,6 +51,14 @@ export default function Home() {
     )
   }, [])
 
+  const handleFileRapportChange = useCallback((fileId: string, rapport: "KARTA" | "DJAM") => {
+    setFiles((prevFiles) =>
+      prevFiles.map((file) =>
+        file.id === fileId ? { ...file, rapportPaiement: rapport } : file
+      )
+    )
+  }, [])
+
   // Mettre à jour les statuts des fichiers en fonction de la conversion
   useEffect(() => {
     if (conversionState.files.size === 0) return
@@ -126,6 +134,18 @@ export default function Home() {
       return
     }
 
+    // Valider que chaque fichier a un rapport de paiement sélectionné
+    const filesWithoutRapport = files.filter(
+      (file) => !file.rapportPaiement
+    )
+    if (filesWithoutRapport.length > 0) {
+      setIsError(true)
+      setErrorMessage(
+        `Veuillez sélectionner KARTA ou DJAM pour ${filesWithoutRapport.length > 1 ? "tous les fichiers" : "le fichier"}`
+      )
+      return
+    }
+
     setIsSuccess(false)
     setIsError(false)
     setErrorMessage("")
@@ -165,6 +185,13 @@ export default function Home() {
         return
       }
 
+      // Valider que le fichier a un rapport de paiement
+      if (!fileToRetry.rapportPaiement) {
+        setIsError(true)
+        setErrorMessage("Veuillez sélectionner KARTA ou DJAM pour ce fichier")
+        return
+      }
+
       try {
         await retryFailedFiles([fileToRetry])
       } catch (error) {
@@ -193,6 +220,16 @@ export default function Home() {
     if (filesWithoutTaux.length > 0) {
       setIsError(true)
       setErrorMessage("Veuillez saisir un taux de change valide pour tous les fichiers")
+      return
+    }
+
+    // Valider que tous les fichiers en erreur ont un rapport de paiement
+    const filesWithoutRapport = failedFiles.filter(
+      (file) => !file.rapportPaiement
+    )
+    if (filesWithoutRapport.length > 0) {
+      setIsError(true)
+      setErrorMessage("Veuillez sélectionner KARTA ou DJAM pour tous les fichiers")
       return
     }
 
@@ -260,6 +297,7 @@ export default function Home() {
             onFileDownload={handleFileDownload}
             onFileRetry={handleFileRetry}
             onFileTauxChange={handleFileTauxChange}
+            onFileRapportChange={handleFileRapportChange}
           />
 
           {files.length > 0 && !showActionButtons && (

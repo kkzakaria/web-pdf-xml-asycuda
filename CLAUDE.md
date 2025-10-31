@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Next.js web application for converting PDF files to XML format for ASYCUDA (Automated System for Customs Data). Uses a secure proxy architecture where Next.js API routes act as intermediaries between the client and an external conversion API, keeping API credentials server-side only.
 
-**API Version**: v1.4.10 (requires exchange rate for all conversions)
+**API Version**: v1.4.10 (requires exchange rate and payment report for all conversions)
 
 **Exchange Rate System**: Each PDF file can have a different exchange rate (e.g., 572.021 for USD/XOF) since files may contain information in different currencies.
+
+**Payment Report System**: Each PDF file must have a payment report type selected (KARTA or DJAM). The client sends only the label ("KARTA" or "DJAM"), and the server securely maps it to the actual value from environment variables (`RAPPORT_DE_PAIEMENT_KRT` or `RAPPORT_DE_PAIEMENT_DJM`). This follows the same proxy architecture pattern as the API_KEY.
 
 ## Development Commands
 
@@ -36,9 +38,11 @@ Required `.env.local` (server-side only):
 ```env
 API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 API_KEY=<your-api-key>
+RAPPORT_DE_PAIEMENT_KRT=<karta-value>
+RAPPORT_DE_PAIEMENT_DJM=<djam-value>
 ```
 
-**Critical**: These variables are NEVER exposed to the client. All external API calls go through Next.js API routes (`/api/*`) which add authentication headers server-side.
+**Critical**: These variables are NEVER exposed to the client. All external API calls go through Next.js API routes (`/api/*`) which add authentication headers and map payment report labels to actual values server-side.
 
 ## Architecture Patterns
 
@@ -49,17 +53,26 @@ API_KEY=<your-api-key>
 - API routes validate environment variables before each external call
 
 ### Conversion Flow Pattern
-1. **Upload**: User uploads PDF files and specifies exchange rate per file in UI
-2. **Submit**: Client sends file + `taux_douane` (exchange rate) to `/api/convert` (Next.js route)
-3. **Async Job**: Route proxies to external API (`/api/v1/convert/async`), returns `job_id`
-4. **Polling**: Client polls `/api/jobs/[jobId]/status` every 2 seconds (max 2 min)
-5. **Download**: On completion, client retrieves XML via `/api/jobs/[jobId]/download`
+1. **Upload**: User uploads PDF files and specifies exchange rate + payment report per file in UI
+2. **Submit**: Client sends file + `taux_douane` (exchange rate) + `rapport_paiement` (KARTA or DJAM label) to `/api/convert` (Next.js route)
+3. **Server Mapping**: Route maps `rapport_paiement` label to actual value from env variables (KARTA → `RAPPORT_DE_PAIEMENT_KRT`, DJAM → `RAPPORT_DE_PAIEMENT_DJM`)
+4. **Async Job**: Route proxies to external API (`/api/v1/convert/async`) with mapped rapport value, returns `job_id`
+5. **Polling**: Client polls `/api/jobs/[jobId]/status` every 2 seconds (max 2 min)
+6. **Download**: On completion, client retrieves XML via `/api/jobs/[jobId]/download`
 
 **Exchange Rate System**:
 - Each file has its own `tauxDouane` field (number > 0) - e.g., 572.021 for USD/XOF
 - Default value: 572.021 (USD/XOF)
 - User can modify the rate for each file before conversion
 - Files are converted sequentially, each with their specific rate
+
+**Payment Report System (v1.4.10+)**:
+- Each file must have `rapportPaiement` selected: `"KARTA"` or `"DJAM"` (TypeScript: `RapportType`)
+- **No default value** - user must make explicit choice (mandatory in UI, optional in API)
+- Client sends only the label ("KARTA" or "DJAM")
+- Server securely maps: `KARTA` → `env.RAPPORT_DE_PAIEMENT_KRT`, `DJAM` → `env.RAPPORT_DE_PAIEMENT_DJM`
+- Actual values NEVER exposed to client (proxy architecture pattern)
+- UI provides per-file selection + bulk application feature (like exchange rate)
 
 ### State Management Pattern
 - **File Upload State**: `hooks/use-file-upload.ts` - File selection, validation, preview management
