@@ -40,9 +40,54 @@ API_BASE_URL=https://pdf-xml-asycuda-api.onrender.com
 API_KEY=<your-api-key>
 RAPPORT_DE_PAIEMENT_KRT=<karta-value>
 RAPPORT_DE_PAIEMENT_DJM=<djam-value>
+
+# Supabase Authentication
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 ```
 
-**Critical**: These variables are NEVER exposed to the client. All external API calls go through Next.js API routes (`/api/*`) which add authentication headers and map payment report labels to actual values server-side.
+**Critical**: API_KEY and RAPPORT_DE_PAIEMENT variables are NEVER exposed to the client. All external API calls go through Next.js API routes (`/api/*`) which add authentication headers and map payment report labels to actual values server-side. Supabase variables use `NEXT_PUBLIC_` prefix as they are safely exposed (protected by RLS).
+
+## Authentication System
+
+**Supabase Authentication** integrated with Next.js 15.5.5 App Router following official Supabase SSR patterns.
+
+### Authentication Architecture
+- **Packages**: `@supabase/ssr@0.7.0` + `@supabase/supabase-js@2.78.0`
+- **Client Types**:
+  - Browser client (`lib/supabase/browser.ts`) - Client Components
+  - Server client (`lib/supabase/server.ts`) - Server Components/API Routes
+- **Middleware**: Route protection with automatic redirection (`middleware.ts`)
+- **Login Flow**: Simple email/password authentication (no signup or password reset)
+- **Session Management**: Server-side cookies via Supabase SSR
+
+### Protected Routes
+- All routes require authentication except:
+  - `/login` - Login page
+  - `/auth/*` - Auth callbacks
+  - Static assets
+
+### Authentication Usage
+
+**Server Component**:
+```typescript
+import { createClient } from '@/lib/supabase/server'
+
+const supabase = await createClient()
+const { data: { user } } = await supabase.auth.getUser()
+```
+
+**Client Component**:
+```typescript
+import { createClient } from '@/lib/supabase/browser'
+
+const supabase = createClient()
+const { data: { user } } = await supabase.auth.getUser()
+```
+
+**Server Actions**: `app/login/actions.ts` contains `login()` and `logout()` functions.
+
+See `claudedocs/authentication-implementation.md` for detailed documentation.
 
 ## Architecture Patterns
 
