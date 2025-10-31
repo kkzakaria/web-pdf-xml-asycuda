@@ -87,7 +87,19 @@ const { data: { user } } = await supabase.auth.getUser()
 
 **Server Actions**: `app/login/actions.ts` contains `login()` and `logout()` functions.
 
+### User Interface Components
+
+**UserAvatar Component** (`components/UserAvatar.tsx`):
+- Displays user avatar in top-right corner of all pages
+- Dropdown menu with:
+  - User email display
+  - Logout button
+- Auto-generated initials from email (e.g., "john.doe@example.com" → "JD")
+- Integrated in `app/layout.tsx` with fixed positioning
+- Uses shadcn/ui Avatar and DropdownMenu components
+
 See `claudedocs/authentication-implementation.md` for detailed documentation.
+See `claudedocs/user-avatar-component.md` for UserAvatar documentation.
 
 ## Architecture Patterns
 
