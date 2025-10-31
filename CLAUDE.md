@@ -97,6 +97,32 @@ See `claudedocs/authentication-implementation.md` for detailed documentation.
 - All authentication (`X-API-Key` header) added server-side in API routes
 - API routes validate environment variables before each external call
 
+### API Routes Security (Supabase Auth)
+**All API routes require Supabase authentication** to prevent unauthorized access.
+
+**Protected routes**:
+- `POST /api/convert` - Start PDF conversion
+- `GET /api/jobs/[jobId]/status` - Check job status
+- `GET /api/jobs/[jobId]/download` - Download XML file
+
+**Authentication check** (in every API route):
+```typescript
+const supabase = await createClient()
+const { data: { user }, error } = await supabase.auth.getUser()
+
+if (error || !user) {
+  return NextResponse.json({ detail: "Non autorisé" }, { status: 401 })
+}
+```
+
+**Security benefits**:
+- ✅ Only authenticated users can convert files
+- ✅ Session managed server-side (httpOnly cookies)
+- ✅ Double-layer protection (Middleware + API routes)
+- ✅ No API access without valid Supabase session
+
+See `claudedocs/api-security.md` for detailed security documentation.
+
 ### Conversion Flow Pattern
 1. **Upload**: User uploads PDF files and specifies exchange rate + payment report per file in UI
 2. **Submit**: Client sends file + `taux_douane` (exchange rate) + `rapport_paiement` (KARTA or DJAM label) to `/api/convert` (Next.js route)
