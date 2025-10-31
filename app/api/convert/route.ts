@@ -1,11 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 
 /**
  * API Route pour la conversion PDF vers XML ASYCUDA
  * Fait proxy vers l'API externe avec authentification
+ * SÉCURISÉ: Nécessite une authentification Supabase
  */
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier l'authentification
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { detail: "Non autorisé - Authentification requise" },
+        { status: 401 }
+      )
+    }
     const formData = await request.formData()
     const file = formData.get("file")
     const tauxDouane = formData.get("taux_douane")

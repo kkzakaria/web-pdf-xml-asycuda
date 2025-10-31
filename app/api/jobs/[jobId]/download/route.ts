@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
 
 /**
  * API Route pour télécharger le fichier XML d'un job de conversion
  * Fait proxy vers l'API externe avec authentification
+ * SÉCURISÉ: Nécessite une authentification Supabase
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
+    // Vérifier l'authentification
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { detail: "Non autorisé - Authentification requise" },
+        { status: 401 }
+      )
+    }
+
     const { jobId } = await params
 
     // Vérifier les variables d'environnement
