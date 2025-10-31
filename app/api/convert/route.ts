@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get("file")
     const tauxDouane = formData.get("taux_douane")
+    const rapportLabel = formData.get("rapport_paiement")
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -33,6 +34,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Valider le rapport de paiement
+    if (!rapportLabel || typeof rapportLabel !== "string") {
+      return NextResponse.json(
+        { detail: "Le rapport de paiement est obligatoire" },
+        { status: 400 }
+      )
+    }
+
+    if (!["KARTA", "DJAM"].includes(rapportLabel)) {
+      return NextResponse.json(
+        { detail: "Le rapport de paiement doit être KARTA ou DJAM" },
+        { status: 400 }
+      )
+    }
+
     // Vérifier les variables d'environnement
     const apiBaseUrl = process.env.API_BASE_URL
     const apiKey = process.env.API_KEY
@@ -41,6 +57,26 @@ export async function POST(request: NextRequest) {
       console.error("Variables d'environnement manquantes:", {
         API_BASE_URL: !!apiBaseUrl,
         API_KEY: !!apiKey,
+      })
+      return NextResponse.json(
+        { detail: "Configuration serveur invalide" },
+        { status: 500 }
+      )
+    }
+
+    // Mapper le label du rapport vers la valeur d'environnement (SÉCURITÉ)
+    const rapportValue =
+      rapportLabel === "KARTA"
+        ? process.env.RAPPORT_DE_PAIEMENT_KRT
+        : process.env.RAPPORT_DE_PAIEMENT_DJM
+
+    if (!rapportValue) {
+      console.error("Variable d'environnement rapport manquante:", {
+        label: rapportLabel,
+        envVar:
+          rapportLabel === "KARTA"
+            ? "RAPPORT_DE_PAIEMENT_KRT"
+            : "RAPPORT_DE_PAIEMENT_DJM",
       })
       return NextResponse.json(
         { detail: "Configuration serveur invalide" },
@@ -57,6 +93,7 @@ export async function POST(request: NextRequest) {
     const externalFormData = new FormData()
     externalFormData.append("file", blob, file.name)
     externalFormData.append("taux_douane", tauxValue.toString())
+    externalFormData.append("rapport_paiement", rapportValue) // Valeur réelle, pas le label
 
     // Appeler l'API externe avec authentification (v1.4.10)
     const response = await fetch(`${apiBaseUrl}/convert/async`, {

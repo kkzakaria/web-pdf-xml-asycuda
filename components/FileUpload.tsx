@@ -24,6 +24,7 @@ import {
   type FileUploadOptions,
   type FileWithPreview,
 } from "@/hooks/use-file-upload"
+import type { RapportType } from "@/types/api"
 import { Button } from "@/components/ui/button"
 import { ProcessingStatesOverlay } from "@/components/ProcessingStatesOverlay"
 import { Spinner } from "@/components/ui/spinner"
@@ -46,6 +47,7 @@ type FileUploadProps = FileUploadOptions & {
   onFileDownload?: (fileId: string) => void
   onFileRetry?: (fileId: string) => void
   onFileTauxChange?: (fileId: string, taux: number) => void
+  onFileRapportChange?: (fileId: string, rapport: RapportType) => void
   controlledFiles?: FileWithPreview[]
   onClearFiles?: () => void
 }
@@ -199,6 +201,7 @@ export default function FileUpload({
   onFileDownload,
   onFileRetry,
   onFileTauxChange,
+  onFileRapportChange,
   controlledFiles,
   onClearFiles,
 }: FileUploadProps) {
@@ -215,6 +218,9 @@ export default function FileUpload({
       getInputProps,
       applyTauxToAll,
       applyTauxToFiles,
+      updateFileRapport,
+      applyRapportToAll,
+      applyRapportToFiles,
     },
   ] = useFileUpload({
     multiple,
@@ -228,6 +234,7 @@ export default function FileUpload({
 
   // Bulk application state
   const [bulkTaux, setBulkTaux] = useState<number>(572.021)
+  const [bulkRapport, setBulkRapport] = useState<RapportType | undefined>(undefined)
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set())
   const [individualInputsVisible, setIndividualInputsVisible] = useState<boolean>(true)
   const [showConfirmDialog, setShowConfirmDialog] = useState<boolean>(false)
@@ -283,6 +290,25 @@ export default function FileUpload({
       applyTauxToFiles(Array.from(selectedFileIds), bulkTaux)
       setSelectedFileIds(new Set())
     }
+  }
+
+  // Handle applying rapport to all files
+  const handleApplyRapportToAll = () => {
+    if (!bulkRapport) return
+    const idleFiles = files.filter((f) => !f.status || f.status === "idle")
+    if (idleFiles.length === 0) return
+
+    applyRapportToAll(bulkRapport)
+  }
+
+  // Handle applying rapport to selected files
+  const handleApplyRapportToSelected = () => {
+    if (!bulkRapport) return
+    const selectedFiles = files.filter((f) => selectedFileIds.has(f.id))
+    if (selectedFiles.length === 0) return
+
+    applyRapportToFiles(Array.from(selectedFileIds), bulkRapport)
+    setSelectedFileIds(new Set())
   }
 
   // Handle checkbox toggle
@@ -447,33 +473,80 @@ export default function FileUpload({
               {/* Input pour le taux de change (collapsible) */}
               {individualInputsVisible &&
               (!file.status || file.status === "idle") ? (
-                <div className="mt-2 flex items-center gap-2">
-                  <label
-                    htmlFor={`taux-${file.id}`}
-                    className="text-xs text-muted-foreground whitespace-nowrap"
-                  >
-                    Taux de change:
-                  </label>
-                  <input
-                    id={`taux-${file.id}`}
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    value={file.tauxDouane || 572.021}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value)
-                      if (!isNaN(value) && onFileTauxChange) {
-                        onFileTauxChange(file.id, value)
-                      }
-                    }}
-                    disabled={disabled || isProcessing}
-                    className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Ex: 572.021"
-                  />
-                  <span className="text-xs text-muted-foreground">
-                    (ex: USD/XOF)
-                  </span>
-                </div>
+                <>
+                  <div className="mt-2 flex items-center gap-2">
+                    <label
+                      htmlFor={`taux-${file.id}`}
+                      className="text-xs text-muted-foreground whitespace-nowrap"
+                    >
+                      Taux de change:
+                    </label>
+                    <input
+                      id={`taux-${file.id}`}
+                      type="number"
+                      min="0"
+                      step="0.001"
+                      value={file.tauxDouane || 572.021}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value)
+                        if (!isNaN(value) && onFileTauxChange) {
+                          onFileTauxChange(file.id, value)
+                        }
+                      }}
+                      disabled={disabled || isProcessing}
+                      className="flex-1 rounded border border-input bg-background px-2 py-1 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Ex: 572.021"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      (ex: USD/XOF)
+                    </span>
+                  </div>
+
+                  {/* Radio buttons pour le rapport de paiement */}
+                  <div className="mt-2">
+                    <label className="text-xs text-muted-foreground block mb-1">
+                      Rapport de paiement: <span className="text-destructive">*</span>
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`rapport-${file.id}`}
+                          value="KARTA"
+                          checked={file.rapportPaiement === "KARTA"}
+                          onChange={() => {
+                            if (onFileRapportChange) {
+                              onFileRapportChange(file.id, "KARTA")
+                            } else {
+                              updateFileRapport(file.id, "KARTA")
+                            }
+                          }}
+                          disabled={disabled || isProcessing}
+                          className="size-4 cursor-pointer border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <span className="text-xs">KARTA</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`rapport-${file.id}`}
+                          value="DJAM"
+                          checked={file.rapportPaiement === "DJAM"}
+                          onChange={() => {
+                            if (onFileRapportChange) {
+                              onFileRapportChange(file.id, "DJAM")
+                            } else {
+                              updateFileRapport(file.id, "DJAM")
+                            }
+                          }}
+                          disabled={disabled || isProcessing}
+                          className="size-4 cursor-pointer border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        />
+                        <span className="text-xs">DJAM</span>
+                      </label>
+                    </div>
+                  </div>
+                </>
               ) : null}
             </div>
           ))}
@@ -566,6 +639,78 @@ export default function FileUpload({
                       bulkTaux <= 0
                     }
                     className="border-primary text-primary hover:bg-primary/10"
+                  >
+                    Appliquer à la sélection
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Application groupée du rapport de paiement */}
+          {files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
+            <div className="rounded-lg border-2 border-dashed border-green-600/30 bg-green-600/5 p-4 space-y-3">
+              <h3 className="text-sm font-medium text-foreground">
+                Application groupée du rapport de paiement
+              </h3>
+
+              {/* Radio buttons globaux et bouton "Appliquer à tous" */}
+              <div className="space-y-2">
+                <label className="text-xs text-muted-foreground block">
+                  Sélectionner le rapport: <span className="text-destructive">*</span>
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bulk-rapport"
+                      value="KARTA"
+                      checked={bulkRapport === "KARTA"}
+                      onChange={() => setBulkRapport("KARTA")}
+                      disabled={disabled || isProcessing}
+                      className="size-4 cursor-pointer border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <span className="text-xs">KARTA</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="bulk-rapport"
+                      value="DJAM"
+                      checked={bulkRapport === "DJAM"}
+                      onChange={() => setBulkRapport("DJAM")}
+                      disabled={disabled || isProcessing}
+                      className="size-4 cursor-pointer border-gray-300 text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                    <span className="text-xs">DJAM</span>
+                  </label>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleApplyRapportToAll}
+                  disabled={disabled || isProcessing || !bulkRapport}
+                  className="w-full"
+                >
+                  Appliquer à tous
+                </Button>
+              </div>
+
+              {/* Bouton "Appliquer à la sélection" */}
+              {selectedFileIds.size > 0 && (
+                <div className="flex items-center justify-between pt-2 border-t border-green-600/20">
+                  <span className="text-xs text-muted-foreground">
+                    {selectedFileIds.size} fichier
+                    {selectedFileIds.size > 1 ? "s" : ""} sélectionné
+                    {selectedFileIds.size > 1 ? "s" : ""}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleApplyRapportToSelected}
+                    disabled={disabled || isProcessing || !bulkRapport}
+                    className="border-green-600 text-green-600 hover:bg-green-600/10"
                   >
                     Appliquer à la sélection
                   </Button>

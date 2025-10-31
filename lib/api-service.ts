@@ -62,15 +62,18 @@ function createTimeoutController(timeout: number): AbortController {
  * Démarre une conversion PDF en XML ASYCUDA (asynchrone)
  * @param file - Fichier PDF à convertir
  * @param tauxDouane - Taux de douane (obligatoire, > 0)
+ * @param rapportPaiement - Type de rapport de paiement (KARTA ou DJAM, obligatoire)
  * @returns Informations sur le job créé
  */
 export async function convertPdfAsync(
   file: File,
-  tauxDouane: number
+  tauxDouane: number,
+  rapportPaiement: "KARTA" | "DJAM"
 ): Promise<ConvertAsyncResponse> {
   const formData = new FormData()
   formData.append("file", file)
   formData.append("taux_douane", tauxDouane.toString())
+  formData.append("rapport_paiement", rapportPaiement)
 
   const response = await fetch(API_CONFIG.endpoints.convertAsync, {
     method: "POST",
@@ -144,17 +147,19 @@ export function downloadXmlFile(blob: Blob, filename: string): void {
  * Gère le processus de conversion avec polling du statut
  * @param file - Fichier PDF à convertir
  * @param tauxDouane - Taux de douane (obligatoire, > 0)
+ * @param rapportPaiement - Type de rapport de paiement (KARTA ou DJAM, obligatoire)
  * @param onProgress - Callback pour suivre la progression
  * @returns ID du job de conversion
  */
 export async function convertPdfFile(
   file: File,
   tauxDouane: number,
+  rapportPaiement: "KARTA" | "DJAM",
   onProgress?: (status: string, progress: number) => void
 ): Promise<string> {
   // Démarrer la conversion asynchrone
   onProgress?.("Envoi du fichier...", 10)
-  const asyncResponse = await convertPdfAsync(file, tauxDouane)
+  const asyncResponse = await convertPdfAsync(file, tauxDouane, rapportPaiement)
   const jobId = asyncResponse.job_id
 
   // Polling du statut jusqu'à completion
