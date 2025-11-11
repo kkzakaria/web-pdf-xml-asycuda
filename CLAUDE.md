@@ -6,11 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Next.js web application for converting PDF files to XML format for ASYCUDA (Automated System for Customs Data). Uses a secure proxy architecture where Next.js API routes act as intermediaries between the client and an external conversion API, keeping API credentials server-side only.
 
-**API Version**: v1.4.10 (requires exchange rate and payment report for all conversions)
+**API Version**: v2.1.0 (supports standard conversion and automatic chassis VIN generation)
 
 **Exchange Rate System**: Each PDF file can have a different exchange rate (e.g., 572.021 for USD/XOF) since files may contain information in different currencies.
 
 **Payment Report System**: Each PDF file must have a payment report type selected (KARTA or DJAM). The client sends only the label ("KARTA" or "DJAM"), and the server securely maps it to the actual value from environment variables (`RAPPORT_DE_PAIEMENT_KRT` or `RAPPORT_DE_PAIEMENT_DJM`). This follows the same proxy architecture pattern as the API_KEY.
+
+**Chassis VIN Generation (v2.1.0+)**: New feature for automatic generation of Vehicle Identification Numbers (VIN) compliant with ISO 3779 standard. Accessible via dedicated tab in UI, supports single file conversion with configurable quantity (1-1000 VINs). See `claudedocs/chassis-vin-generation.md` for complete documentation.
 
 ## Development Commands
 
@@ -113,7 +115,8 @@ See `claudedocs/user-avatar-component.md` for UserAvatar documentation.
 **All API routes require Supabase authentication** to prevent unauthorized access.
 
 **Protected routes**:
-- `POST /api/convert` - Start PDF conversion
+- `POST /api/convert` - Start PDF conversion (standard)
+- `POST /api/convert-chassis` - Start PDF conversion with VIN generation (v2.1.0+)
 - `GET /api/jobs/[jobId]/status` - Check job status
 - `GET /api/jobs/[jobId]/download` - Download XML file
 
@@ -173,13 +176,15 @@ Files are converted **one at a time** (not parallel) to avoid overloading the ex
 ## Key Files and Their Roles
 
 ### API Routes (Server-Side Proxy Layer)
-- `app/api/convert/route.ts` - Proxies PDF upload + `taux_douane` to external `/api/v1/convert/async`
+- `app/api/convert/route.ts` - Proxies PDF upload + `taux_douane` to external `/api/v1/convert/async` (standard conversion)
+- `app/api/convert-chassis/route.ts` - Proxies PDF upload + `chassis_config` to external `/api/v1/convert/async` (v2.1.0+)
 - `app/api/jobs/[jobId]/status/route.ts` - Proxies job status checks to `/api/v1/convert/{jobId}`
 - `app/api/jobs/[jobId]/download/route.ts` - Streams XML file from `/api/v1/convert/{jobId}/download`
 
 ### Core Services
 - `lib/api-service.ts` - Client-side API calls (to Next.js routes, not external API)
-  - `convertPdfFile()` - Full conversion flow with polling
+  - `convertPdfFile()` - Full conversion flow with polling (standard)
+  - `convertPdfWithChassis()` - Full conversion flow with VIN generation (v2.1.0+)
   - `getXmlBlob()` - Fetch XML without auto-download
   - `downloadXmlFile()` - Trigger browser download
 - `lib/api-config.ts` - Internal Next.js endpoint URLs (NOT external API URLs)
@@ -190,7 +195,8 @@ Files are converted **one at a time** (not parallel) to avoid overloading the ex
 - `hooks/use-file-upload.ts` - File selection, validation (5 files max, 2MB each), drag-and-drop
 
 ### Components
-- `components/FileUpload.tsx` - File upload UI with drag-drop, status icons per file
+- `components/FileUpload.tsx` - File upload UI with drag-drop, status icons per file (standard conversion)
+- `components/ChassisConversion.tsx` - Standalone conversion UI with VIN generation (v2.1.0+)
 - `components/SubmitButton.tsx` - Handles conversion, individual download, bulk download, retry
 - `components/ProcessingStatesOverlay.tsx` - Fullscreen animations (converting, success, error)
 - `components/FileConversionAnimation.tsx` - Lottie animation during conversion
@@ -200,7 +206,9 @@ Files are converted **one at a time** (not parallel) to avoid overloading the ex
 
 ### Types
 - `types/api.ts` - TypeScript definitions for all API responses and conversion states
-  - **ConversionMetrics** (v1.4.10): `items_count`, `containers_count`, `fill_rate`, `warnings`, `xml_valid`, `has_exporter`, `has_consignee`, `processing_time`
+  - **ConversionMetrics** (v2.1.0): `items_count`, `containers_count`, `fill_rate`, `warnings`, `xml_valid`, `has_exporter`, `has_consignee`, `processing_time`
+  - **ChassisConfig** (v2.1.0+): VIN generation configuration with `wmi`, `vds`, `year`, `plant_code`, `quantity`, `ensure_unique`
+  - **Utility functions**: `generateRandomVinComponent()`, `generateChassisConfig()` for ISO 3779 compliant VIN generation
 
 ## Pre-commit Hooks
 
@@ -213,9 +221,17 @@ If type errors or linting errors exist, the commit will be blocked.
 ## Important Constraints
 
 ### File Limits
+
+**Standard Conversion**:
 - **Max files**: 5 per batch
 - **Max size**: 2MB per file
 - **Format**: PDF only
+
+**Chassis Conversion (v2.1.0+)**:
+- **Max files**: 1 per conversion
+- **Max size**: 2MB
+- **Format**: PDF only
+- **VIN quantity**: 1-1000 per conversion
 
 ### Timeout Configuration
 - **Conversion polling**: 2 seconds between checks, 60 attempts max (2 minutes total)

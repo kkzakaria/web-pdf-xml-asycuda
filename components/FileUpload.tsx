@@ -428,8 +428,8 @@ export default function FileUpload({
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-3 overflow-hidden">
-                  {/* Checkbox pour sélection groupée */}
-                  {(!file.status || file.status === "idle") && (
+                  {/* Checkbox pour sélection groupée - masqué en mode fichier unique */}
+                  {(!file.status || file.status === "idle") && maxFiles > 1 && (
                     <input
                       type="checkbox"
                       checked={selectedFileIds.has(file.id)}
@@ -551,8 +551,8 @@ export default function FileUpload({
             </div>
           ))}
 
-          {/* Application groupée du taux de change */}
-          {files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
+          {/* Application groupée du taux de change - masqué en mode fichier unique */}
+          {maxFiles > 1 && files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
             <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
               {/* Header avec toggle pour inputs individuels */}
               <div className="flex items-center justify-between">
@@ -647,8 +647,8 @@ export default function FileUpload({
             </div>
           )}
 
-          {/* Application groupée du rapport de paiement */}
-          {files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
+          {/* Application groupée du rapport de paiement - masqué en mode fichier unique */}
+          {maxFiles > 1 && files.filter((f) => !f.status || f.status === "idle").length >= 2 && (
             <div className="rounded-lg border-2 border-dashed border-green-600/30 bg-green-600/5 p-4 space-y-3">
               <h3 className="text-sm font-medium text-foreground">
                 Application groupée du rapport de paiement

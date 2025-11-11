@@ -10,6 +10,7 @@ import type {
   JobResultResponse,
   ApiError,
   ApiRequestOptions,
+  ChassisConfig,
 } from "@/types/api"
 
 /**
@@ -208,5 +209,113 @@ export async function convertPdfFile(
   }
 
   onProgress?.("Conversion terminée", 100)
+  return jobId
+}
+
+/**
+ * Démarre une conversion PDF en XML ASYCUDA avec génération de châssis VIN (asynchrone)
+ * @param file - Fichier PDF à convertir
+ * @param tauxDouane - Taux de douane (obligatoire, > 0)
+ * @param rapportPaiement - Type de rapport de paiement (KARTA ou DJAM, obligatoire)
+ * @param chassisConfig - Configuration pour la génération des numéros VIN
+ * @returns Informations sur le job créé
+ */
+export async function convertPdfWithChassisAsync(
+  file: File,
+  tauxDouane: number,
+  rapportPaiement: "KARTA" | "DJAM",
+  chassisConfig: ChassisConfig
+): Promise<ConvertAsyncResponse> {
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("taux_douane", tauxDouane.toString())
+  formData.append("rapport_paiement", rapportPaiement)
+  formData.append("chassis_config", JSON.stringify(chassisConfig))
+
+  const response = await fetch(API_CONFIG.endpoints.convertChassis, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!response.ok) {
+    await handleApiError(response)
+  }
+
+  return (await response.json()) as ConvertAsyncResponse
+}
+
+/**
+ * Convertit un fichier PDF en XML ASYCUDA avec génération de châssis VIN
+ * Gère le processus de conversion avec polling du statut
+ * @param file - Fichier PDF à convertir
+ * @param tauxDouane - Taux de douane (obligatoire, > 0)
+ * @param rapportPaiement - Type de rapport de paiement (KARTA ou DJAM, obligatoire)
+ * @param chassisConfig - Configuration pour la génération des numéros VIN
+ * @param onProgress - Callback pour suivre la progression
+ * @returns ID du job de conversion
+ */
+export async function convertPdfWithChassis(
+  file: File,
+  tauxDouane: number,
+  rapportPaiement: "KARTA" | "DJAM",
+  chassisConfig: ChassisConfig,
+  onProgress?: (status: string, progress: number) => void
+): Promise<string> {
+  // Démarrer la conversion asynchrone avec châssis
+  onProgress?.("Envoi du fichier...", 10)
+  const asyncResponse = await convertPdfWithChassisAsync(
+    file,
+    tauxDouane,
+    rapportPaiement,
+    chassisConfig
+  )
+  const jobId = asyncResponse.job_id
+
+  // Polling du statut jusqu'à completion
+  onProgress?.("Conversion et génération VIN en cours...", 30)
+  let status = asyncResponse.status
+  let attempts = 0
+  const maxAttempts = 60 // 60 * 2s = 2 minutes max
+
+  while (
+    status !== "completed" &&
+    status !== "failed" &&
+    status !== "cancelled" &&
+    attempts < maxAttempts
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 2000)) // Attendre 2 secondes
+    const statusResponse = await getJobStatus(jobId)
+    status = statusResponse.status
+
+    if (statusResponse.progress) {
+      onProgress?.(
+        "Conversion et génération VIN en cours...",
+        30 + statusResponse.progress * 0.7
+      )
+    }
+
+    attempts++
+  }
+
+  if (status === "failed") {
+    const statusResponse = await getJobStatus(jobId)
+    throw new ApiServiceError(
+      statusResponse.error || "La conversion a échoué",
+      500
+    )
+  }
+
+  if (status === "cancelled") {
+    throw new ApiServiceError("La conversion a été annulée", 499)
+  }
+
+  if (attempts >= maxAttempts) {
+    throw new ApiServiceError(
+      "La conversion a pris trop de temps (timeout)",
+      408
+    )
+  }
+
+  onProgress?.("Conversion et génération VIN terminées", 100)
   return jobId
 }

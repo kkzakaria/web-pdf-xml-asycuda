@@ -11,6 +11,7 @@ export const API_CONFIG = {
   // Routes Next.js internes (proxy sécurisé)
   endpoints: {
     convertAsync: "/api/convert",
+    convertChassis: "/api/convert-chassis", // v2.1.0: Conversion avec génération VIN
     jobStatus: (jobId: string) => `/api/jobs/${jobId}/status`,
     downloadXml: (jobId: string) => `/api/jobs/${jobId}/download`,
   },
