@@ -96,9 +96,60 @@ export type ApiError = {
 }
 
 /**
+ * Configuration pour la génération de numéros de châssis VIN (API v2.1.0)
+ * Conforme à la norme ISO 3779
+ */
+export type ChassisConfig = {
+  generate_chassis: boolean
+  quantity: number // Nombre de VIN à générer
+  wmi: string // World Manufacturer Identifier (3 caractères)
+  vds: string // Vehicle Descriptor Section (5 caractères)
+  year: number // Année de fabrication
+  plant_code: string // Code usine (1 caractère)
+  ensure_unique: boolean // Garantir l'unicité des VIN
+}
+
+/**
+ * Requête de conversion avec génération de châssis
+ */
+export type ConvertChassisRequest = {
+  taux_douane: number
+  rapport_paiement: RapportType
+  quantity: number // Quantité de VIN à générer
+}
+
+/**
  * Options pour les requêtes API
  */
 export type ApiRequestOptions = {
   timeout?: number
   onProgress?: (progress: number) => void
+}
+
+/**
+ * Génère un composant aléatoire pour VIN conforme ISO 3779
+ * Exclut les caractères I, O, Q
+ */
+export function generateRandomVinComponent(length: number): string {
+  const chars = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789" // Sans I, O, Q
+  let result = ""
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return result
+}
+
+/**
+ * Génère une configuration ChassisConfig complète avec valeurs aléatoires
+ */
+export function generateChassisConfig(quantity: number): ChassisConfig {
+  return {
+    generate_chassis: true,
+    quantity,
+    wmi: generateRandomVinComponent(3),
+    vds: generateRandomVinComponent(5),
+    year: new Date().getFullYear(),
+    plant_code: generateRandomVinComponent(1),
+    ensure_unique: true,
+  }
 }

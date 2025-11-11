@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState, useRef } from "react"
 import FileUpload from "@/components/FileUpload"
 import { SubmitButton } from "@/components/SubmitButton"
 import { Logo } from "@/components/Logo"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ChassisConversion } from "@/components/ChassisConversion"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 import { usePdfConversion } from "@/hooks/use-pdf-conversion"
 
@@ -258,7 +260,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="space-y-8">
           <div className="text-center space-y-3">
             <div className="flex justify-center -mb-2">
               <Logo size={80} />
@@ -266,13 +268,25 @@ export default function Home() {
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
               Conversion PDF vers XML ASYCUDA
             </h1>
-            <p className="text-muted-foreground">
-              Téléversez jusqu&apos;à 5 fichiers PDF de 2MB maximum chacun
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Vous pourrez définir un taux de change spécifique pour chaque fichier
-            </p>
           </div>
+
+          <Tabs defaultValue="standard" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="standard">Conversion Standard</TabsTrigger>
+              <TabsTrigger value="chassis">Conversion avec Châssis</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="standard" className="space-y-8">
+              <div className="text-center space-y-2">
+                <p className="text-muted-foreground">
+                  Téléversez jusqu&apos;à 5 fichiers PDF de 2MB maximum chacun
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Vous pourrez définir un taux de change spécifique pour chaque fichier
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-8">
 
           <FileUpload
             key={fileUploadKey}
@@ -313,41 +327,57 @@ export default function Home() {
             </div>
           )}
 
-          {/* Boutons d'action après conversion */}
-          {showActionButtons && (
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-wrap gap-2">
-                {successCount > 1 && (
-                  <SubmitButton
-                    onClick={handleDownloadAll}
-                    className="flex-1"
-                    variant="default"
-                  >
-                    Télécharger tout ({successCount} fichiers ZIP)
-                  </SubmitButton>
-                )}
+                {/* Boutons d'action après conversion */}
+                {showActionButtons && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {successCount > 1 && (
+                        <SubmitButton
+                          onClick={handleDownloadAll}
+                          className="flex-1"
+                          variant="default"
+                        >
+                          Télécharger tout ({successCount} fichiers ZIP)
+                        </SubmitButton>
+                      )}
 
-                {errorCount > 0 && (
-                  <SubmitButton
-                    onClick={handleRetryFailed}
-                    className="flex-1"
-                    variant="outline"
-                  >
-                    Réessayer les échecs ({errorCount})
-                  </SubmitButton>
-                )}
+                      {errorCount > 0 && (
+                        <SubmitButton
+                          onClick={handleRetryFailed}
+                          className="flex-1"
+                          variant="outline"
+                        >
+                          Réessayer les échecs ({errorCount})
+                        </SubmitButton>
+                      )}
 
-                <SubmitButton
-                  onClick={handleReset}
-                  className="flex-1"
-                  variant="outline"
-                >
-                  Recommencer
-                </SubmitButton>
+                      <SubmitButton
+                        onClick={handleReset}
+                        className="flex-1"
+                        variant="outline"
+                      >
+                        Recommencer
+                      </SubmitButton>
+                    </div>
+                  </div>
+                )}
+              </form>
+            </TabsContent>
+
+            <TabsContent value="chassis" className="space-y-8">
+              <div className="text-center space-y-2">
+                <p className="text-muted-foreground">
+                  Conversion avec génération automatique de numéros VIN
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Un seul fichier PDF par conversion • Génération conforme ISO 3779
+                </p>
               </div>
-            </div>
-          )}
-        </form>
+
+              <ChassisConversion />
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   )
