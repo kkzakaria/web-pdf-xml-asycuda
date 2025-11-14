@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Next.js web application for converting PDF files to XML format for ASYCUDA (Automated System for Customs Data). Uses a secure proxy architecture where Next.js API routes act as intermediaries between the client and an external conversion API, keeping API credentials server-side only.
 
-**API Version**: v2.1.0 (supports standard conversion and automatic chassis VIN generation)
+**API Version**: v2.3.0 (supports synchronous conversion with payment and chassis VIN generation)
 
 **Exchange Rate System**: Each PDF file can have a different exchange rate (e.g., 572.021 for USD/XOF) since files may contain information in different currencies.
 
@@ -115,10 +115,10 @@ See `claudedocs/user-avatar-component.md` for UserAvatar documentation.
 **All API routes require Supabase authentication** to prevent unauthorized access.
 
 **Protected routes**:
-- `POST /api/convert` - Start PDF conversion (standard)
-- `POST /api/convert-chassis` - Start PDF conversion with VIN generation (v2.1.0+)
-- `GET /api/jobs/[jobId]/status` - Check job status
-- `GET /api/jobs/[jobId]/download` - Download XML file
+- `POST /api/convert` - Synchronous PDF conversion with payment (v2.3.0)
+- `POST /api/convert-chassis` - Synchronous PDF conversion with payment + VIN generation (v2.3.0)
+- `GET /api/jobs/[jobId]/status` - Check job status (legacy async)
+- `GET /api/jobs/[jobId]/download` - Download XML file (legacy async)
 
 **Authentication check** (in every API route):
 ```typescript
@@ -138,13 +138,21 @@ if (error || !user) {
 
 See `claudedocs/api-security.md` for detailed security documentation.
 
-### Conversion Flow Pattern
+### Conversion Flow Pattern (v2.3.0 - Synchronous)
+
+**Standard Conversion**:
 1. **Upload**: User uploads PDF files and specifies exchange rate + payment report per file in UI
-2. **Submit**: Client sends file + `taux_douane` (exchange rate) + `rapport_paiement` (KARTA or DJAM label) to `/api/convert` (Next.js route)
-3. **Server Mapping**: Route maps `rapport_paiement` label to actual value from env variables (KARTA → `RAPPORT_DE_PAIEMENT_KRT`, DJAM → `RAPPORT_DE_PAIEMENT_DJM`)
-4. **Async Job**: Route proxies to external API (`/api/v1/convert/async`) with mapped rapport value, returns `job_id`
-5. **Polling**: Client polls `/api/jobs/[jobId]/status` every 2 seconds (max 2 min)
-6. **Download**: On completion, client retrieves XML via `/api/jobs/[jobId]/download`
+2. **Submit**: Client sends file + `taux_douane` + `rapport_paiement` (KARTA or DJAM label) to `/api/convert`
+3. **Server Mapping**: Route maps label to env value (KARTA → `RAPPORT_DE_PAIEMENT_KRT`, DJAM → `RAPPORT_DE_PAIEMENT_DJM`)
+4. **Synchronous Conversion**: Route proxies to external API (`/api/v1/convert/with-payment`), returns XML immediately
+5. **Download**: Client receives XML file directly (no polling required)
+
+**Chassis Conversion**:
+1. **Upload**: User uploads PDF file and specifies exchange rate + payment report + chassis config
+2. **Submit**: Client sends file + `taux_douane` + `rapport_paiement` + `chassis_config` to `/api/convert-chassis`
+3. **Server Processing**: Route maps label and validates chassis configuration (v2.3.0 format)
+4. **Synchronous Conversion**: Route proxies to external API (`/api/v1/convert/complete`), returns XML with VINs immediately
+5. **Download**: Client receives XML file with generated VINs (no polling required)
 
 **Exchange Rate System**:
 - Each file has its own `tauxDouane` field (number > 0) - e.g., 572.021 for USD/XOF
@@ -176,15 +184,15 @@ Files are converted **one at a time** (not parallel) to avoid overloading the ex
 ## Key Files and Their Roles
 
 ### API Routes (Server-Side Proxy Layer)
-- `app/api/convert/route.ts` - Proxies PDF upload + `taux_douane` to external `/api/v1/convert/async` (standard conversion)
-- `app/api/convert-chassis/route.ts` - Proxies PDF upload + `chassis_config` to external `/api/v1/convert/async` (v2.1.0+)
-- `app/api/jobs/[jobId]/status/route.ts` - Proxies job status checks to `/api/v1/convert/{jobId}`
-- `app/api/jobs/[jobId]/download/route.ts` - Streams XML file from `/api/v1/convert/{jobId}/download`
+- `app/api/convert/route.ts` - Proxies to `/api/v1/convert/with-payment` (synchronous standard conversion, v2.3.0)
+- `app/api/convert-chassis/route.ts` - Proxies to `/api/v1/convert/complete` (synchronous conversion with VIN generation, v2.3.0)
+- `app/api/jobs/[jobId]/status/route.ts` - Legacy async job status checks (deprecated)
+- `app/api/jobs/[jobId]/download/route.ts` - Legacy async XML download (deprecated)
 
 ### Core Services
 - `lib/api-service.ts` - Client-side API calls (to Next.js routes, not external API)
-  - `convertPdfFile()` - Full conversion flow with polling (standard)
-  - `convertPdfWithChassis()` - Full conversion flow with VIN generation (v2.1.0+)
+  - `convertPdfFile()` - Synchronous conversion flow (v2.3.0, no polling)
+  - `convertPdfWithChassis()` - Synchronous conversion with VIN generation (v2.3.0, no polling)
   - `getXmlBlob()` - Fetch XML without auto-download
   - `downloadXmlFile()` - Trigger browser download
 - `lib/api-config.ts` - Internal Next.js endpoint URLs (NOT external API URLs)
@@ -206,8 +214,9 @@ Files are converted **one at a time** (not parallel) to avoid overloading the ex
 
 ### Types
 - `types/api.ts` - TypeScript definitions for all API responses and conversion states
-  - **ConversionMetrics** (v2.1.0): `items_count`, `containers_count`, `fill_rate`, `warnings`, `xml_valid`, `has_exporter`, `has_consignee`, `processing_time`
-  - **ChassisConfig** (v2.1.0+): VIN generation configuration with `wmi`, `vds`, `year`, `plant_code`, `quantity`, `ensure_unique`
+  - **ConversionMetrics** (v2.3.0): `items_count`, `containers_count`, `fill_rate`, `warnings`, `xml_valid`, `has_exporter`, `has_consignee`, `processing_time`
+  - **ChassisConfig** (v2.3.0): VIN generation configuration with required fields `quantity`, `wmi`, `year` and optional `vds`, `plant_code`
+  - **RapportPaiement**: Payment report number format (e.g., "25P2003J")
   - **Utility functions**: `generateRandomVinComponent()`, `generateChassisConfig()` for ISO 3779 compliant VIN generation
 
 ## Pre-commit Hooks
@@ -227,20 +236,22 @@ If type errors or linting errors exist, the commit will be blocked.
 - **Max size**: 2MB per file
 - **Format**: PDF only
 
-**Chassis Conversion (v2.1.0+)**:
+**Chassis Conversion (v2.3.0)**:
 - **Max files**: 1 per conversion
-- **Max size**: 2MB
+- **Max size**: 2MB (project limit, API supports up to 50MB)
 - **Format**: PDF only
 - **VIN quantity**: 1-1000 per conversion
 
 ### Timeout Configuration
-- **Conversion polling**: 2 seconds between checks, 60 attempts max (2 minutes total)
+- **Conversion mode**: Synchronous (v2.3.0) - no polling required, direct response
 - **Retry delay**: 500ms between retry attempts
+- **Legacy async polling** (deprecated): 2 seconds between checks, 60 attempts max (2 minutes total)
 
 ### Known Limitations
 - No parallel conversion (sequential to avoid API overload)
 - No session persistence (state lost on page reload)
 - No conversion history or progress recovery after refresh
+- Synchronous conversion (v2.3.0) may timeout for very large files (use async endpoints if needed)
 
 ## Common Development Tasks
 

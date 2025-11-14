@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 
 /**
  * API Route pour la conversion PDF vers XML ASYCUDA avec génération de châssis VIN
- * Fait proxy vers l'API externe (v2.1.0) avec authentification
+ * Fait proxy vers l'API externe (v2.3.0) - endpoint synchrone /complete
  * SÉCURISÉ: Nécessite une authentification Supabase
  */
 export async function POST(request: NextRequest) {
@@ -78,26 +78,22 @@ export async function POST(request: NextRequest) {
     let chassisConfig
     try {
       chassisConfig = JSON.parse(chassisConfigJson)
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { detail: "Configuration châssis invalide (JSON malformé)" },
         { status: 400 }
       )
     }
 
-    // Valider la structure ChassisConfig
+    // Valider la structure ChassisConfig (v2.3.0)
     if (
       typeof chassisConfig !== "object" ||
-      typeof chassisConfig.generate_chassis !== "boolean" ||
       typeof chassisConfig.quantity !== "number" ||
       typeof chassisConfig.wmi !== "string" ||
-      typeof chassisConfig.vds !== "string" ||
-      typeof chassisConfig.year !== "number" ||
-      typeof chassisConfig.plant_code !== "string" ||
-      typeof chassisConfig.ensure_unique !== "boolean"
+      typeof chassisConfig.year !== "number"
     ) {
       return NextResponse.json(
-        { detail: "Structure ChassisConfig invalide" },
+        { detail: "Structure ChassisConfig invalide (quantity, wmi, year requis)" },
         { status: 400 }
       )
     }
@@ -110,14 +106,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (chassisConfig.vds.length !== 5) {
+    // VDS et plant_code sont optionnels dans v2.3.0
+    if (chassisConfig.vds && chassisConfig.vds.length !== 5) {
       return NextResponse.json(
         { detail: "VDS doit contenir exactement 5 caractères" },
         { status: 400 }
       )
     }
 
-    if (chassisConfig.plant_code.length !== 1) {
+    if (chassisConfig.plant_code && chassisConfig.plant_code.length !== 1) {
       return NextResponse.json(
         { detail: "plant_code doit contenir exactement 1 caractère" },
         { status: 400 }
@@ -178,8 +175,8 @@ export async function POST(request: NextRequest) {
     externalFormData.append("rapport_paiement", rapportValue)
     externalFormData.append("chassis_config", JSON.stringify(chassisConfig))
 
-    // Appeler l'API externe v2.1.0 avec chassis_config
-    const response = await fetch(`${apiBaseUrl}/convert/async`, {
+    // Appeler l'API externe v2.3.0 - endpoint synchrone /complete (paiement + chassis)
+    const response = await fetch(`${apiBaseUrl}/api/v1/convert/complete`, {
       method: "POST",
       headers: {
         "X-API-Key": apiKey,

@@ -1,6 +1,6 @@
 /**
  * Types pour l'API PDF-XML-ASYCUDA
- * Basé sur la spécification OpenAPI de l'API
+ * Basé sur la spécification OpenAPI de l'API v2.3.0
  */
 
 /**
@@ -8,6 +8,12 @@
  * Labels UI uniquement - les valeurs réelles sont mappées côté serveur
  */
 export type RapportType = "KARTA" | "DJAM"
+
+/**
+ * Format de numéro de rapport de paiement (API v2.3.0)
+ * Exemple: "25P2003J"
+ */
+export type RapportPaiement = string
 
 /**
  * Métriques de conversion (enrichies selon OpenAPI v1.4.10)
@@ -96,17 +102,15 @@ export type ApiError = {
 }
 
 /**
- * Configuration pour la génération de numéros de châssis VIN (API v2.1.0)
+ * Configuration pour la génération de numéros de châssis VIN (API v2.3.0)
  * Conforme à la norme ISO 3779
  */
 export type ChassisConfig = {
-  generate_chassis: boolean
-  quantity: number // Nombre de VIN à générer
+  quantity: number // Nombre de VIN à générer (1-1000)
   wmi: string // World Manufacturer Identifier (3 caractères)
-  vds: string // Vehicle Descriptor Section (5 caractères)
-  year: number // Année de fabrication
-  plant_code: string // Code usine (1 caractère)
-  ensure_unique: boolean // Garantir l'unicité des VIN
+  year: number // Année de fabrication (1980-2055)
+  vds?: string // Vehicle Descriptor Section (5 caractères, défaut: "HCKZS")
+  plant_code?: string // Code usine (1 caractère, défaut: "S")
 }
 
 /**
@@ -144,12 +148,10 @@ export function generateRandomVinComponent(length: number): string {
  */
 export function generateChassisConfig(quantity: number): ChassisConfig {
   return {
-    generate_chassis: true,
     quantity,
     wmi: generateRandomVinComponent(3),
     vds: generateRandomVinComponent(5),
     year: new Date().getFullYear(),
     plant_code: generateRandomVinComponent(1),
-    ensure_unique: true,
   }
 }
