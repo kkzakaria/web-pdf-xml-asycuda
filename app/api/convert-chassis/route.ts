@@ -175,8 +175,8 @@ export async function POST(request: NextRequest) {
     externalFormData.append("rapport_paiement", rapportValue)
     externalFormData.append("chassis_config", JSON.stringify(chassisConfig))
 
-    // Appeler l'API externe v2.3.0 - endpoint synchrone /complete (paiement + chassis)
-    const response = await fetch(`${apiBaseUrl}/api/v1/convert/complete`, {
+    // Appeler l'API externe v2.3.0 - endpoint asynchrone compatible (paiement + chassis)
+    const response = await fetch(`${apiBaseUrl}/convert/async`, {
       method: "POST",
       headers: {
         "X-API-Key": apiKey,

@@ -110,8 +110,8 @@ export async function POST(request: NextRequest) {
     externalFormData.append("taux_douane", tauxValue.toString())
     externalFormData.append("rapport_paiement", rapportValue) // Valeur réelle, pas le label
 
-    // Appeler l'API externe avec authentification (v2.3.0 - endpoint synchrone with-payment)
-    const response = await fetch(`${apiBaseUrl}/api/v1/convert/with-payment`, {
+    // Appeler l'API externe avec authentification (v2.3.0 - endpoint asynchrone compatible)
+    const response = await fetch(`${apiBaseUrl}/convert/async`, {
       method: "POST",
       headers: {
         "X-API-Key": apiKey,
