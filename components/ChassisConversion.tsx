@@ -22,7 +22,7 @@ export function ChassisConversion() {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [quantity, setQuantity] = useState<number | undefined>(undefined)
   const [tauxDouane, setTauxDouane] = useState<number>(572.021)
-  const [rapportPaiement, setRapportPaiement] = useState<RapportType>("KARTA")
+  const [rapportPaiement, setRapportPaiement] = useState<RapportType | undefined>(undefined)
   const [conversionState, setConversionState] = useState<ConversionState>({
     status: "idle",
     progress: 0,
@@ -33,15 +33,14 @@ export function ChassisConversion() {
     // Pour chassis, on accepte qu'un seul fichier
     queueMicrotask(() => {
       if (newFiles.length > 0) {
-        // Initialiser le fichier avec les valeurs par défaut
+        // Initialiser le fichier avec le taux par défaut (pas de rapport par défaut)
         const fileWithDefaults = {
           ...newFiles[0],
           tauxDouane: 572.021,
-          rapportPaiement: "KARTA" as RapportType,
         }
         setFiles([fileWithDefaults])
         setTauxDouane(572.021)
-        setRapportPaiement("KARTA")
+        setRapportPaiement(undefined)
         setConversionState({ status: "idle", progress: 0 })
       }
     })
@@ -69,7 +68,7 @@ export function ChassisConversion() {
   }, [])
 
   const handleConvert = async () => {
-    if (files.length === 0 || !isQuantityValid) return
+    if (files.length === 0 || !isQuantityValid || !isRapportValid) return
 
     const file = files[0].file as File
 
@@ -87,7 +86,7 @@ export function ChassisConversion() {
       const jobId = await convertPdfWithChassis(
         file,
         tauxDouane,
-        rapportPaiement,
+        rapportPaiement!,
         chassisConfig,
         (status, progress) => {
           setConversionState((prev) => ({
@@ -138,13 +137,14 @@ export function ChassisConversion() {
     setFiles([])
     setQuantity(undefined)
     setTauxDouane(572.021)
-    setRapportPaiement("KARTA")
+    setRapportPaiement(undefined)
     setConversionState({ status: "idle", progress: 0 })
     setFileUploadKey((prev) => prev + 1)
   }
 
   const showActionButtons = conversionState.status === "completed" || conversionState.status === "error"
   const isQuantityValid = quantity !== undefined && quantity >= 1 && quantity <= 1000
+  const isRapportValid = rapportPaiement !== undefined
 
   return (
     <div className="space-y-6">
@@ -199,7 +199,7 @@ export function ChassisConversion() {
           isSubmitting={conversionState.status === "processing"}
           submittingText="Conversion en cours..."
           className="w-full"
-          disabled={conversionState.status === "processing" || files.length === 0 || !isQuantityValid}
+          disabled={conversionState.status === "processing" || files.length === 0 || !isQuantityValid || !isRapportValid}
         >
           Convertir avec Châssis
         </SubmitButton>
