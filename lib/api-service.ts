@@ -11,6 +11,8 @@ import type {
   ApiError,
   ApiRequestOptions,
   ChassisConfig,
+  ChassisGenerateResponse,
+  ChassisGenerateParams,
 } from "@/types/api"
 
 /**
@@ -318,4 +320,28 @@ export async function convertPdfWithChassis(
 
   onProgress?.("Conversion et génération VIN terminées", 100)
   return jobId
+}
+
+/**
+ * Génère des numéros VIN de manière indépendante (sans PDF)
+ * Utilise l'endpoint /api/chassis/generate
+ * @param params - Paramètres pour la génération VIN
+ * @returns Réponse avec les VIN générés
+ */
+export async function generateChassisVins(
+  params: ChassisGenerateParams
+): Promise<ChassisGenerateResponse> {
+  const response = await fetch(API_CONFIG.endpoints.generateChassis, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
+  })
+
+  if (!response.ok) {
+    await handleApiError(response)
+  }
+
+  return (await response.json()) as ChassisGenerateResponse
 }

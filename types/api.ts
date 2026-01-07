@@ -127,6 +127,33 @@ export type ApiRequestOptions = {
 }
 
 /**
+ * Réponse de l'API de génération de VIN indépendante
+ */
+export type ChassisGenerateResponse = {
+  success: boolean
+  vins: string[]
+  metadata: {
+    quantity: number
+    wmi: string
+    vds: string
+    year: number
+    plant_code: string
+    generated_at: string
+  }
+}
+
+/**
+ * Paramètres pour la génération de VIN indépendante
+ */
+export type ChassisGenerateParams = {
+  quantity: number // 1-10000
+  wmi: string // 3 caractères
+  year: number // 2001-2030
+  vds?: string // 5 caractères (optionnel)
+  plant_code?: string // 1 caractère (optionnel)
+}
+
+/**
  * Génère un composant aléatoire pour VIN conforme ISO 3779
  * Exclut les caractères I, O, Q
  */

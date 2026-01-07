@@ -6,6 +6,7 @@ import { SubmitButton } from "@/components/SubmitButton"
 import { Logo } from "@/components/Logo"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ChassisConversion } from "@/components/ChassisConversion"
+import { ChassisGenerator } from "@/components/ChassisGenerator"
 import type { FileWithPreview } from "@/hooks/use-file-upload"
 import { usePdfConversion } from "@/hooks/use-pdf-conversion"
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState("")
   const [fileUploadKey, setFileUploadKey] = useState(0)
   const [chassisKey, setChassisKey] = useState(0)
+  const [generatorKey, setGeneratorKey] = useState(0)
   const [activeTab, setActiveTab] = useState("standard")
   const [isChassisConverting, setIsChassisConverting] = useState(false)
   const submitButtonRef = useRef<HTMLDivElement>(null)
@@ -266,6 +268,8 @@ export default function Home() {
       setFileUploadKey((prev) => prev + 1)
       // Réinitialiser le mode châssis (force remount)
       setChassisKey((prev) => prev + 1)
+      // Réinitialiser le générateur de VIN (force remount)
+      setGeneratorKey((prev) => prev + 1)
       setActiveTab(value)
     }
   }, [activeTab, resetConversion])
@@ -293,9 +297,10 @@ export default function Home() {
           </div>
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="standard" disabled={isAnyConversionInProgress}>Conversion Standard</TabsTrigger>
-              <TabsTrigger value="chassis" disabled={isAnyConversionInProgress}>Conversion avec Châssis</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="standard" disabled={isAnyConversionInProgress}>Standard</TabsTrigger>
+              <TabsTrigger value="chassis" disabled={isAnyConversionInProgress}>Avec Châssis</TabsTrigger>
+              <TabsTrigger value="generator" disabled={isAnyConversionInProgress}>N° Châssis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="standard" className="space-y-8">
@@ -397,6 +402,19 @@ export default function Home() {
                 key={chassisKey}
                 onConversionStateChange={setIsChassisConverting}
               />
+            </TabsContent>
+
+            <TabsContent value="generator" className="space-y-8">
+              <div className="text-center space-y-2">
+                <p className="text-muted-foreground">
+                  Génération de numéros de châssis VIN
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Génération conforme ISO 3779 • Sans conversion PDF
+                </p>
+              </div>
+
+              <ChassisGenerator key={generatorKey} />
             </TabsContent>
           </Tabs>
         </div>

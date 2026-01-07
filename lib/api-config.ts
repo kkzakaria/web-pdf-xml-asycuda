@@ -12,6 +12,7 @@ export const API_CONFIG = {
   endpoints: {
     convertAsync: "/api/convert",
     convertChassis: "/api/convert-chassis", // v2.1.0: Conversion avec génération VIN
+    generateChassis: "/api/chassis/generate", // Génération VIN indépendante
     jobStatus: (jobId: string) => `/api/jobs/${jobId}/status`,
     downloadXml: (jobId: string) => `/api/jobs/${jobId}/download`,
   },
