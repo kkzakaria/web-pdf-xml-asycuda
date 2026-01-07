@@ -324,7 +324,7 @@ export default function FileUpload({
     })
   }
 
-  const isMaxFilesReached = multiple && maxFiles !== Infinity && files.length >= maxFiles
+  const isMaxFilesReached = maxFiles !== Infinity && files.length >= maxFiles
   const isDisabled = disabled || isMaxFilesReached
   const hasActiveState = isProcessing || isDownloading || isSuccess || isWarning || isError
 
@@ -344,7 +344,7 @@ export default function FileUpload({
           errorDescription={errorDescription}
           filesCount={files.length}
         />
-      ) : (
+      ) : isMaxFilesReached ? null : (
         <div
           role="button"
           onClick={isDisabled ? undefined : openFileDialog}
