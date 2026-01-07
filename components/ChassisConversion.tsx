@@ -20,7 +20,7 @@ type ConversionState = {
 
 export function ChassisConversion() {
   const [files, setFiles] = useState<FileWithPreview[]>([])
-  const [quantity, setQuantity] = useState<number>(1)
+  const [quantity, setQuantity] = useState<number | undefined>(undefined)
   const [tauxDouane, setTauxDouane] = useState<number>(572.021)
   const [rapportPaiement, setRapportPaiement] = useState<RapportType>("KARTA")
   const [conversionState, setConversionState] = useState<ConversionState>({
@@ -69,7 +69,7 @@ export function ChassisConversion() {
   }, [])
 
   const handleConvert = async () => {
-    if (files.length === 0) return
+    if (files.length === 0 || !isQuantityValid) return
 
     const file = files[0].file as File
 
@@ -81,7 +81,7 @@ export function ChassisConversion() {
       })
 
       // Générer la configuration châssis avec valeurs aléatoires
-      const chassisConfig = generateChassisConfig(quantity)
+      const chassisConfig = generateChassisConfig(quantity!)
 
       // Lancer la conversion avec génération VIN
       const jobId = await convertPdfWithChassis(
@@ -136,7 +136,7 @@ export function ChassisConversion() {
 
   const handleReset = () => {
     setFiles([])
-    setQuantity(1)
+    setQuantity(undefined)
     setTauxDouane(572.021)
     setRapportPaiement("KARTA")
     setConversionState({ status: "idle", progress: 0 })
@@ -144,6 +144,7 @@ export function ChassisConversion() {
   }
 
   const showActionButtons = conversionState.status === "completed" || conversionState.status === "error"
+  const isQuantityValid = quantity !== undefined && quantity >= 1 && quantity <= 1000
 
   return (
     <div className="space-y-6">
@@ -177,8 +178,11 @@ export function ChassisConversion() {
             type="number"
             min={1}
             max={1000}
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            value={quantity ?? ""}
+            onChange={(e) => {
+              const val = e.target.value
+              setQuantity(val === "" ? undefined : parseInt(val))
+            }}
             disabled={conversionState.status === "processing"}
             placeholder="Nombre de VIN à générer (1-1000)"
           />
@@ -195,7 +199,7 @@ export function ChassisConversion() {
           isSubmitting={conversionState.status === "processing"}
           submittingText="Conversion en cours..."
           className="w-full"
-          disabled={conversionState.status === "processing" || files.length === 0}
+          disabled={conversionState.status === "processing" || files.length === 0 || !isQuantityValid}
         >
           Convertir avec Châssis
         </SubmitButton>
