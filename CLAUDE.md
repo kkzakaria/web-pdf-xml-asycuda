@@ -52,7 +52,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 
 ## Authentication System
 
-**Supabase Authentication** integrated with Next.js 15.5.5 App Router following official Supabase SSR patterns.
+**Supabase Authentication** integrated with Next.js App Router following official Supabase SSR patterns.
 
 ### Authentication Architecture
 - **Packages**: `@supabase/ssr@0.7.0` + `@supabase/supabase-js@2.78.0`
@@ -263,7 +263,7 @@ If type errors or linting errors exist, the commit will be blocked.
 
 ## Tech Stack Details
 
-- **Framework**: Next.js 15.5.5 (App Router)
+- **Framework**: Next.js 15.5.7 (App Router)
 - **Build Tool**: Turbopack (via `--turbopack` flag)
 - **React**: 19.1.0 (client components only, no server components in conversion flow)
 - **Styling**: Tailwind CSS 4 + shadcn/ui components
