@@ -279,10 +279,7 @@ export default function Home() {
             <TabsContent value="standard" className="space-y-8">
               <div className="text-center space-y-2">
                 <p className="text-muted-foreground">
-                  Téléversez jusqu&apos;à 5 fichiers PDF de 2MB maximum chacun
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Vous pourrez définir un taux de change spécifique pour chaque fichier
+                  Téléversez un fichier PDF de 2MB maximum
                 </p>
               </div>
 
@@ -290,10 +287,10 @@ export default function Home() {
 
           <FileUpload
             key={fileUploadKey}
-            maxFiles={5}
+            maxFiles={1}
             maxSize={2 * 1024 * 1024}
             accept=".pdf,application/pdf"
-            multiple={true}
+            multiple={false}
             onFilesChange={handleFilesChange}
             onClearFiles={handleClearFiles}
             disabled={conversionState.isConverting || conversionState.isDownloading}

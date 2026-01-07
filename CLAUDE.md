@@ -222,15 +222,12 @@ If type errors or linting errors exist, the commit will be blocked.
 
 ### File Limits
 
-**Standard Conversion**:
-- **Max files**: 5 per batch
-- **Max size**: 2MB per file
-- **Format**: PDF only
-
-**Chassis Conversion (v2.1.0+)**:
+**All Conversion Modes**:
 - **Max files**: 1 per conversion
 - **Max size**: 2MB
 - **Format**: PDF only
+
+**Chassis Conversion (v2.1.0+)**:
 - **VIN quantity**: 1-1000 per conversion
 
 ### Timeout Configuration
