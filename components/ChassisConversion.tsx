@@ -33,7 +33,15 @@ export function ChassisConversion() {
     // Pour chassis, on accepte qu'un seul fichier
     queueMicrotask(() => {
       if (newFiles.length > 0) {
-        setFiles([newFiles[0]])
+        // Initialiser le fichier avec les valeurs par défaut
+        const fileWithDefaults = {
+          ...newFiles[0],
+          tauxDouane: 572.021,
+          rapportPaiement: "KARTA" as RapportType,
+        }
+        setFiles([fileWithDefaults])
+        setTauxDouane(572.021)
+        setRapportPaiement("KARTA")
         setConversionState({ status: "idle", progress: 0 })
       }
     })
@@ -48,10 +56,16 @@ export function ChassisConversion() {
 
   const handleFileTauxChange = useCallback((fileId: string, taux: number) => {
     setTauxDouane(taux)
+    setFiles(prevFiles => prevFiles.map(f =>
+      f.id === fileId ? { ...f, tauxDouane: taux } : f
+    ))
   }, [])
 
   const handleFileRapportChange = useCallback((fileId: string, rapport: RapportType) => {
     setRapportPaiement(rapport)
+    setFiles(prevFiles => prevFiles.map(f =>
+      f.id === fileId ? { ...f, rapportPaiement: rapport } : f
+    ))
   }, [])
 
   const handleConvert = async () => {
