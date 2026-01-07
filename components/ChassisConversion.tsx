@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { SubmitButton } from "@/components/SubmitButton"
@@ -18,7 +18,11 @@ type ConversionState = {
   progress: number
 }
 
-export function ChassisConversion() {
+type ChassisConversionProps = {
+  onConversionStateChange?: (isConverting: boolean) => void
+}
+
+export function ChassisConversion({ onConversionStateChange }: ChassisConversionProps) {
   const [files, setFiles] = useState<FileWithPreview[]>([])
   const [quantity, setQuantity] = useState<number | undefined>(undefined)
   const [tauxDouane, setTauxDouane] = useState<number>(572.021)
@@ -28,6 +32,11 @@ export function ChassisConversion() {
     progress: 0,
   })
   const [fileUploadKey, setFileUploadKey] = useState(0)
+
+  // Notifier le parent du changement d'état de conversion
+  useEffect(() => {
+    onConversionStateChange?.(conversionState.status === "processing")
+  }, [conversionState.status, onConversionStateChange])
 
   const handleFilesChange = useCallback((newFiles: FileWithPreview[]) => {
     // Pour chassis, on accepte qu'un seul fichier

@@ -15,6 +15,9 @@ export default function Home() {
   const [isError, setIsError] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
   const [fileUploadKey, setFileUploadKey] = useState(0)
+  const [chassisKey, setChassisKey] = useState(0)
+  const [activeTab, setActiveTab] = useState("standard")
+  const [isChassisConverting, setIsChassisConverting] = useState(false)
   const submitButtonRef = useRef<HTMLDivElement>(null)
 
   const [
@@ -251,6 +254,25 @@ export default function Home() {
     setFileUploadKey((prev) => prev + 1)
   }, [resetConversion])
 
+  const handleTabChange = useCallback((value: string) => {
+    // Réinitialiser l'état lors du changement de mode
+    if (value !== activeTab) {
+      // Réinitialiser le mode standard
+      resetConversion()
+      setFiles([])
+      setIsSuccess(false)
+      setIsError(false)
+      setErrorMessage("")
+      setFileUploadKey((prev) => prev + 1)
+      // Réinitialiser le mode châssis (force remount)
+      setChassisKey((prev) => prev + 1)
+      setActiveTab(value)
+    }
+  }, [activeTab, resetConversion])
+
+  // Vérifier si une conversion est en cours (standard ou châssis)
+  const isAnyConversionInProgress = conversionState.isConverting || isChassisConverting
+
   // Compter les fichiers par statut
   const successCount = files.filter((f) => f.status === "success").length
   const errorCount = files.filter((f) => f.status === "error").length
@@ -270,10 +292,10 @@ export default function Home() {
             </h1>
           </div>
 
-          <Tabs defaultValue="standard" className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="standard">Conversion Standard</TabsTrigger>
-              <TabsTrigger value="chassis">Conversion avec Châssis</TabsTrigger>
+              <TabsTrigger value="standard" disabled={isAnyConversionInProgress}>Conversion Standard</TabsTrigger>
+              <TabsTrigger value="chassis" disabled={isAnyConversionInProgress}>Conversion avec Châssis</TabsTrigger>
             </TabsList>
 
             <TabsContent value="standard" className="space-y-8">
@@ -371,7 +393,10 @@ export default function Home() {
                 </p>
               </div>
 
-              <ChassisConversion />
+              <ChassisConversion
+                key={chassisKey}
+                onConversionStateChange={setIsChassisConverting}
+              />
             </TabsContent>
           </Tabs>
         </div>
